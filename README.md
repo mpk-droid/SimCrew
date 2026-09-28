@@ -1,4 +1,4 @@
-# Synthetic Users
+# SimCrew
 
 AI synthetic users that test the developer experience of your software. Give it a git repo URL — it spins up isolated agent containers (one per persona), each clones the repo and evaluates it like a real developer. Findings are deduplicated, scored GREEN/YELLOW/RED, and viewable in the built-in UI.
 
@@ -21,7 +21,7 @@ Findings are scored GREEN / YELLOW / RED and stored in a database. A built-in UI
 ### Run with Docker Compose
 
 ```bash
-git clone <repo-url> && cd synthetic-users
+git clone <repo-url> && cd SimCrew
 
 # Set your LLM credentials
 export NVIDIA_API_KEY=nvapi-...  # https://build.nvidia.com/settings
@@ -186,7 +186,7 @@ And a 5-phase journey: First Impressions → Setup → Running Locally → Using
 
 > **Work in progress** — environment CRUD and per-persona assignment are disabled in the UI and API. Runs use the default agent image. The notes below describe the planned workflow.
 
-Agents run inside container images. **Default** uses the built-in Synthetic Users agent image. To simulate a different OS or toolchain, publish a variant of the base image and register it as an Environment.
+Agents run inside container images. **Default** uses the built-in SimCrew agent image. To simulate a different OS or toolchain, publish a variant of the base image and register it as an Environment.
 
 **Base image (published on Quay):**
 
@@ -194,7 +194,7 @@ Agents run inside container images. **Default** uses the built-in Synthetic User
 quay.io/rh-ee-mpk/synthetic-users:latest
 ```
 
-This image includes the Synthetic Users agent server (`SU_ROLE=agent`). Custom environment images must extend it — do not use an unrelated container image.
+This image includes the SimCrew agent server (`SU_ROLE=agent`). Custom environment images must extend it — do not use an unrelated container image.
 
 ### 1. Build your variant
 

@@ -1,9 +1,9 @@
 ---
-description: Synthetic Users architecture, commands, and security boundaries
+description: SimCrew architecture, commands, and security boundaries
 alwaysApply: true
 ---
 
-# Synthetic Users — Project Context
+# SimCrew — Project Context
 
 Full details in `AGENTS.md`. Critical boundaries:
 

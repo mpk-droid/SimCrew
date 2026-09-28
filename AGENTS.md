@@ -1,11 +1,11 @@
-# Synthetic Users
+# SimCrew
 
 Microservice that runs AI synthetic users against any software target to evaluate developer experience. Users provide a git repository URL, the service spins up one container per persona, each clones the repo and independently evaluates it like a real developer, and findings are deduplicated, scored, and viewable in the built-in UI.
 
 ## Structure
 
 ```
-synthetic-users/
+SimCrew/
 ├── backend/                     # FastAPI + SQLAlchemy + Alembic
 │   ├── app/
 │   │   ├── main.py              # Orchestrator app entry, lifespan, static file serving
@@ -53,13 +53,13 @@ In Cursor, use **Terminal → Run Task** (`Cmd+Shift+P` → "Tasks: Run Task") f
 
 ## Local ports (Gmail Buddy conflict)
 
-**Gmail Buddy** on this machine uses **:5173** (frontend) and **:3001** (backend). Do **not** use those for Synthetic Users.
+**Gmail Buddy** on this machine uses **:5173** (frontend) and **:3001** (backend). Do **not** use those for SimCrew.
 
 | Service | Port |
 |---------|------|
-| Synthetic Users (docker full stack) | **8000** (UI + API) |
-| Synthetic Users backend (dev) | **8000** |
-| Synthetic Users frontend (dev) | **5174** → proxies `/api` to :8000 |
+| SimCrew (docker full stack) | **8000** (UI + API) |
+| SimCrew backend (dev) | **8000** |
+| SimCrew frontend (dev) | **5174** → proxies `/api` to :8000 |
 
 Open dev UI at http://localhost:5174 — not :5173.
 
