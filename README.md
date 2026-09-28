@@ -1,6 +1,6 @@
 # SimCrew
 
-AI synthetic users that test the developer experience of your software. Give it a git repo URL — it spins up isolated agent containers (one per persona), each clones the repo and evaluates it like a real developer. Findings are deduplicated, scored GREEN/YELLOW/RED, and viewable in the built-in UI.
+AI synthetic developers that test the developer experience of your software. Give it a git repo URL — it spins up isolated agent containers (one per persona), each clones the repo and evaluates it like a real developer. Findings are deduplicated, scored GREEN/YELLOW/RED, and viewable in the built-in UI.
 
 ## How It Works
 
@@ -255,7 +255,7 @@ docker push quay.io/rh-ee-mpk/synthetic-users:latest
 ### Deploy with Helm
 
 ```bash
-helm install synthetic-users ./chart \
+helm install simcrew ./chart \
   --set image.repository=quay.io/rh-ee-mpk/synthetic-users \
   --set image.tag=latest \
   --set secrets.vertexProjectId=your-gcp-project \
