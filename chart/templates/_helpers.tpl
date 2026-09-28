@@ -1,8 +1,8 @@
-{{- define "synthetic-users.name" -}}
+{{- define "simcrew.name" -}}
 {{- .Chart.Name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{- define "synthetic-users.fullname" -}}
+{{- define "simcrew.fullname" -}}
 {{- if contains .Chart.Name .Release.Name }}
 {{- .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -10,14 +10,14 @@
 {{- end }}
 {{- end }}
 
-{{- define "synthetic-users.labels" -}}
-app.kubernetes.io/name: {{ include "synthetic-users.name" . }}
+{{- define "simcrew.labels" -}}
+app.kubernetes.io/name: {{ include "simcrew.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
-{{- define "synthetic-users.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "synthetic-users.name" . }}
+{{- define "simcrew.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "simcrew.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}

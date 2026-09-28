@@ -10,6 +10,7 @@ import anthropic
 
 from app.engine.supervisor import score_run
 from app.engine.tools import ToolContext, execute_tool, get_all_tools
+from app.engine.usage import MeteredClient
 
 logger = logging.getLogger(__name__)
 
@@ -198,7 +199,7 @@ async def execute_agent_run(
     Returns:
         Dict with persona_id, phase_summaries, findings, blocked info.
     """
-    client = _build_client(config)
+    client = MeteredClient(_build_client(config))
     max_tokens = config.get("max_tokens", 4096)
     command_timeout = config.get("command_timeout", 120)
     build_timeout = config.get("build_timeout", 300)
@@ -214,6 +215,7 @@ async def execute_agent_run(
     )
 
     phase_summaries: dict[str, str] = {}
+    phase_usage: dict[str, dict] = {}
     blocked = False
     blocked_phase = None
     blocked_reason = None
@@ -226,6 +228,7 @@ async def execute_agent_run(
         if on_event:
             await on_event("phase_started", {"phase": phase_name})
 
+        before = client.snapshot()
         try:
             summary = await run_persona_phase(
                 client=client,
@@ -259,6 +262,12 @@ async def execute_agent_run(
             blocked_phase = phase_name
             blocked_reason = str(e)
             break
+        finally:
+            after = client.snapshot()
+            phase_usage[phase_name] = {
+                key: after[key] - before[key]
+                for key in ("calls", "input_tokens", "output_tokens")
+            }
 
     for f in tool_ctx.findings:
         f["_persona"] = persona_name
@@ -270,6 +279,7 @@ async def execute_agent_run(
         "findings": tool_ctx.findings,
         "blocked_phase": blocked_phase,
         "blocked_reason": blocked_reason,
+        "usage": {**client.snapshot(), "phases": phase_usage},
     }
 
 

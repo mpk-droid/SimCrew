@@ -18,6 +18,7 @@ from app.engine.triage_verify import (
     prepare_workspace,
     spot_check_cluster,
 )
+from app.engine.usage import MeteredClient
 from app.models.run import Run, RunPersona
 
 logger = logging.getLogger(__name__)
@@ -256,6 +257,7 @@ async def _triage_run_body(run_id: str) -> None:
 
     triaged_count = 0
     insight_count = 0
+    client = None
 
     try:
         async with async_session() as db:
@@ -322,9 +324,8 @@ async def _triage_run_body(run_id: str) -> None:
                         }
                     )
 
-            client = None
             try:
-                client = _build_client(run.config or {})
+                client = MeteredClient(_build_client(run.config or {}))
             except Exception:
                 logger.warning("Triage LLM client unavailable", exc_info=True)
 
@@ -349,11 +350,15 @@ async def _triage_run_body(run_id: str) -> None:
 
             try:
                 for cluster in clusters:
-                    status, note = await spot_check_cluster(
-                        cluster.finding,
-                        cluster.personas,
-                        tool_ctx,
-                    )
+                    try:
+                        status, note = await spot_check_cluster(
+                            cluster.finding,
+                            cluster.personas,
+                            tool_ctx,
+                        )
+                    except Exception as exc:
+                        logger.warning("Spot-check failed for run %s", run_id, exc_info=True)
+                        status, note = "unverified", f"Spot-check failed: {exc}"
                     if status == "contradicted":
                         contradicted.append((cluster, note))
                         continue
@@ -387,6 +392,7 @@ async def _triage_run_body(run_id: str) -> None:
                 "status": "complete",
                 "triaged_findings": triaged_findings,
                 "insights": insights,
+                "usage": client.snapshot() if client else {},
             }
             run.metadata_ = metadata
             flag_modified(run, "metadata_")
@@ -403,6 +409,7 @@ async def _triage_run_body(run_id: str) -> None:
                     "triaged_findings": [],
                     "insights": [],
                     "error": "Triage failed",
+                    "usage": client.snapshot() if client else {},
                 }
                 run.metadata_ = metadata
                 flag_modified(run, "metadata_")

@@ -370,7 +370,7 @@ class KubernetesOrchestrator(AgentOrchestrator):
                 name="ANTHROPIC_API_KEY",
                 value_from=k8s_client.V1EnvVarSource(
                     secret_key_ref=k8s_client.V1SecretKeySelector(
-                        name=os.environ.get("SU_K8S_SECRET", "synthetic-users"),
+                        name=os.environ.get("SU_K8S_SECRET", "simcrew"),
                         key="ANTHROPIC_API_KEY",
                         optional=True,
                     )
@@ -380,7 +380,7 @@ class KubernetesOrchestrator(AgentOrchestrator):
                 name="ANTHROPIC_VERTEX_PROJECT_ID",
                 value_from=k8s_client.V1EnvVarSource(
                     secret_key_ref=k8s_client.V1SecretKeySelector(
-                        name=os.environ.get("SU_K8S_SECRET", "synthetic-users"),
+                        name=os.environ.get("SU_K8S_SECRET", "simcrew"),
                         key="ANTHROPIC_VERTEX_PROJECT_ID",
                         optional=True,
                     )
@@ -390,7 +390,7 @@ class KubernetesOrchestrator(AgentOrchestrator):
                 name="CLOUD_ML_REGION",
                 value_from=k8s_client.V1EnvVarSource(
                     secret_key_ref=k8s_client.V1SecretKeySelector(
-                        name=os.environ.get("SU_K8S_SECRET", "synthetic-users"),
+                        name=os.environ.get("SU_K8S_SECRET", "simcrew"),
                         key="CLOUD_ML_REGION",
                         optional=True,
                     )
@@ -400,7 +400,7 @@ class KubernetesOrchestrator(AgentOrchestrator):
                 name="MODELS_CORP_API_KEY",
                 value_from=k8s_client.V1EnvVarSource(
                     secret_key_ref=k8s_client.V1SecretKeySelector(
-                        name=os.environ.get("SU_K8S_SECRET", "synthetic-users"),
+                        name=os.environ.get("SU_K8S_SECRET", "simcrew"),
                         key="MODELS_CORP_API_KEY",
                         optional=True,
                     )
@@ -410,7 +410,7 @@ class KubernetesOrchestrator(AgentOrchestrator):
                 name="MODELS_CORP_URL",
                 value_from=k8s_client.V1EnvVarSource(
                     secret_key_ref=k8s_client.V1SecretKeySelector(
-                        name=os.environ.get("SU_K8S_SECRET", "synthetic-users"),
+                        name=os.environ.get("SU_K8S_SECRET", "simcrew"),
                         key="MODELS_CORP_URL",
                         optional=True,
                     )
@@ -420,7 +420,7 @@ class KubernetesOrchestrator(AgentOrchestrator):
                 name="NVIDIA_API_KEY",
                 value_from=k8s_client.V1EnvVarSource(
                     secret_key_ref=k8s_client.V1SecretKeySelector(
-                        name=os.environ.get("SU_K8S_SECRET", "synthetic-users"),
+                        name=os.environ.get("SU_K8S_SECRET", "simcrew"),
                         key="NVIDIA_API_KEY",
                         optional=True,
                     )
@@ -430,7 +430,7 @@ class KubernetesOrchestrator(AgentOrchestrator):
                 name="NVIDIA_NIM_BASE_URL",
                 value_from=k8s_client.V1EnvVarSource(
                     secret_key_ref=k8s_client.V1SecretKeySelector(
-                        name=os.environ.get("SU_K8S_SECRET", "synthetic-users"),
+                        name=os.environ.get("SU_K8S_SECRET", "simcrew"),
                         key="NVIDIA_NIM_BASE_URL",
                         optional=True,
                     )
@@ -440,7 +440,7 @@ class KubernetesOrchestrator(AgentOrchestrator):
                 name="NVIDIA_NIM_MODEL",
                 value_from=k8s_client.V1EnvVarSource(
                     secret_key_ref=k8s_client.V1SecretKeySelector(
-                        name=os.environ.get("SU_K8S_SECRET", "synthetic-users"),
+                        name=os.environ.get("SU_K8S_SECRET", "simcrew"),
                         key="NVIDIA_NIM_MODEL",
                         optional=True,
                     )
@@ -450,7 +450,7 @@ class KubernetesOrchestrator(AgentOrchestrator):
                 name="NVIDIA_NIM_FALLBACK_MODEL",
                 value_from=k8s_client.V1EnvVarSource(
                     secret_key_ref=k8s_client.V1SecretKeySelector(
-                        name=os.environ.get("SU_K8S_SECRET", "synthetic-users"),
+                        name=os.environ.get("SU_K8S_SECRET", "simcrew"),
                         key="NVIDIA_NIM_FALLBACK_MODEL",
                         optional=True,
                     )
@@ -460,7 +460,7 @@ class KubernetesOrchestrator(AgentOrchestrator):
                 name="NVIDIA_NIM_ENABLE_THINKING",
                 value_from=k8s_client.V1EnvVarSource(
                     secret_key_ref=k8s_client.V1SecretKeySelector(
-                        name=os.environ.get("SU_K8S_SECRET", "synthetic-users"),
+                        name=os.environ.get("SU_K8S_SECRET", "simcrew"),
                         key="NVIDIA_NIM_ENABLE_THINKING",
                         optional=True,
                     )
