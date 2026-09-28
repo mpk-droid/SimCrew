@@ -1,9 +1,3 @@
-<!--
-REWRITE DRAFT.
-Before publishing: merge the simcrew-deploy branch so the CI script link and the
-`usage` field described here exist on main.
--->
-
 # Shifting developer experience left with SimCrew: Let synthetic developers find your onboarding bugs first
 
 You cannot read your own README. You can look at the words, but you cannot experience them, because you already know what `MODEL_ID` means, which port the service listens on, and that `make dev` has to run before `make test`. Every repository you have ever written is easy to set up, and that tells you nothing.
@@ -188,7 +182,7 @@ To show a run with nothing hidden, here is the first full run of the current bui
 
 **Setup.** The run used the four-persona baseline crew: Sam (junior backend dev), Dana (staff engineer), Priya (engineering director), and Kai (platform lead). It followed the five-phase generic journey on NVIDIA Nemotron 3 models and took 24 minutes.
 
-**Result.** The score came back RED, with the rationale `24 critical finding(s) require immediate attention.` The personas reported 114 raw findings. Triage merged them into 85, of which 18 are critical, 48 need attention, and 19 are nits. It verified 62 against the repository. It rejected 25 findings as ones it could not confirm, and each rejection became a per-persona insight.
+**Result.** The personas reported 114 raw findings, 27 of them critical. The score is computed as soon as the run ends, after a quick first merge of duplicates, and it came back RED with the rationale `24 critical finding(s) require immediate attention.` Triage then ran its stricter pass. It grouped the 114 findings into 110 clusters and rejected 25 of them as ones it could not confirm. Each rejection is recorded against the persona that reported it, which feeds the persona grading described below. That left 85 findings: 18 critical, 48 needing attention, and 19 nits. Triage verified 62 of the 85 against the repository. The other 23 stayed unverified, either because they could not be checked or because they rest only on several personas agreeing.
 
 What it got right:
 
@@ -218,7 +212,7 @@ Here is what the run above consumed. SimCrew records token usage per persona and
 | Triage | 10 | 14,016 | 7,658 |
 | **Total** | **932** | **9,837,955** | **79,228** |
 
-By phase, across all four personas:
+By phase, across all four personas (triage excluded):
 
 | Phase | Model calls | Input tokens |
 |---|---|---|
@@ -251,7 +245,7 @@ What reduces cost per run, roughly in order of impact:
 Nothing special is needed to run SimCrew from a pipeline. It takes two API calls:
 
 1. `POST /api/runs` with the repository URL, the personas, and the journey. You can optionally pick the model per run: SimCrew supports Claude through the Anthropic SDK or Vertex AI, and NVIDIA NIM models.
-2. Poll `GET /api/runs/{id}` until the status is `completed` or `failed` and `triage.status` is `complete`, then fail the job if the score is RED.
+2. Poll `GET /api/runs/{id}` until the status is `completed` or `failed` and `triage.status` is `complete`, then fail the job if the score is RED. Triage reports `complete` even when it fails, with an `error` field, so a failed run cannot leave the poll waiting on it. Still, give the loop an overall timeout; the example script defaults to one hour.
 
 `GET /api/runs/{id}` returns the score, the rationale, per-persona status including `blocked_phase` and `blocked_reason`, the triaged findings deduplicated across personas, and the token usage for the run. That is enough to write a useful pull request comment without scraping anything. A complete example is [`examples/ci/simcrew-dx-gate.sh`](https://github.com/mpk-droid/SimCrew/blob/main/examples/ci/simcrew-dx-gate.sh): it starts a run, waits for triage, prints the score and every finding above `nits`, and exits non-zero on RED.
 
@@ -273,7 +267,7 @@ The obvious objection to an LLM evaluator is that it will invent problems, confi
 
 **Evidence must be verbatim.** The generated prompt requires the `evidence` field on every finding to be exact text from a prior tool call, not a paraphrase. A finding without quotable output is a finding you can discard.
 
-**The orchestrator re-checks the work.** After a run completes, triage clones the target repository independently and spot-checks finding clusters against the real files and commands. Findings whose evidence does not survive that check are marked as contradicted rather than silently kept.
+**The orchestrator re-checks the work.** After a run completes, triage clones the target repository independently and spot-checks finding clusters against the real files and commands. Findings whose evidence does not survive that check are marked as contradicted rather than silently kept. The check has limits, as the run above shows. "Verified" means the quoted evidence really is in the cited file, not that the conclusion drawn from it is right, which is how the `.env` finding got through. The check can also reject a correct finding: for a claim like "no `HEALTHCHECK` in the Dockerfile", it currently tests whether the Dockerfile exists rather than whether it contains a `HEALTHCHECK`. Tightening both is [open work](https://github.com/mpk-droid/SimCrew/issues/5).
 
 **Agreement is a signal.** Findings are grouped by category and file path, then clustered by title similarity, keeping the highest severity in each cluster and recording which personas reported it. Three of four personas hitting the same wall is a much stronger result than one persona having an opinion, and the report shows you which it is.
 
