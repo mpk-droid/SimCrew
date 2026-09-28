@@ -261,6 +261,8 @@ async def execute_tool(
 def _tool_read_file(arguments: dict, ctx: ToolContext) -> str:
     path = arguments.get("path", "")
     resolved = _resolve_safe_path(path, ctx.workspace_dir)
+    if resolved.is_dir():
+        raise ToolError(f"Is a directory, not a file: {path}")
     content = resolved.read_text(errors="replace")
     if len(content) > MAX_FILE_CHARS:
         content = (
