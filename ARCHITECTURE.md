@@ -3,7 +3,7 @@ ARCHITECTURE.md 151L lines:1-55
    2| 
    3| ## Overview
    4| 
-   5| Synthetic Users is a microservice that runs AI personas against software targets to evaluate developer experience. Each persona is an LLM agent (Claude via Anthropic SDK) with sandboxed tools that walks a configurable journey and reports evidence-backed findings.
+   5| SimCrew is a microservice that runs AI personas against software targets to evaluate developer experience. Each persona is an LLM agent (Claude via Anthropic SDK) with sandboxed tools that walks a configurable journey and reports evidence-backed findings.
    6| 
    7| ```
    8| ┌─────────────────────────────────────────────────┐

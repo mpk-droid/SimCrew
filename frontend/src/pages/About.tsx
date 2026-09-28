@@ -9,9 +9,9 @@ export default function About() {
       <PublicRepoDisclaimerBanner />
 
       <section className="about-section card">
-        <h3>What is Synthetic Users?</h3>
+        <h3>What is SimCrew?</h3>
         <p>
-          Synthetic Users runs AI-powered developer personas against your software — typically a
+          SimCrew runs AI-powered developer personas against your software — typically a
           git repository — and reports developer experience (DX) findings the way a real team
           member would.
         </p>

@@ -21,7 +21,7 @@ from app.engine.runner import execute_agent_run
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Synthetic Users Agent")
+app = FastAPI(title="SimCrew Agent")
 
 
 class AgentRunRequest(BaseModel):

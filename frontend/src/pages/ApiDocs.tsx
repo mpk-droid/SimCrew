@@ -61,7 +61,7 @@ export default function ApiDocs() {
 
       <div className="docs-intro card">
         <p>
-          REST API for Synthetic Users. All <code>/api</code> endpoints accept and return{' '}
+          REST API for SimCrew. All <code>/api</code> endpoints accept and return{' '}
           <code>application/json</code>.
         </p>
         <dl className="docs-meta">

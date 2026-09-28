@@ -28,7 +28,7 @@ export const apiSections: ApiSection[] = [
     id: 'overview',
     title: 'Overview',
     description:
-      'Synthetic Users exposes a REST API under /api. All request and response bodies use JSON unless noted otherwise.',
+      'SimCrew exposes a REST API under /api. All request and response bodies use JSON unless noted otherwise.',
     endpoints: [
       {
         method: 'GET',

@@ -30,7 +30,7 @@ export default function Layout() {
     <div className="layout">
       <aside className="sidebar">
         <div className="sidebar-header">
-          <h1 className="sidebar-title">Synthetic Users</h1>
+          <h1 className="sidebar-title">SimCrew</h1>
         </div>
         <nav className="sidebar-nav">
           {mainNavItems.map((item) => {
