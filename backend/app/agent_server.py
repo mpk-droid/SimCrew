@@ -116,6 +116,7 @@ async def _run_agent_background(request: AgentRunRequest) -> None:
                 "findings": result["findings"],
                 "blocked_phase": result.get("blocked_phase"),
                 "blocked_reason": result.get("blocked_reason"),
+                "usage": result.get("usage", {}),
             },
         )
 

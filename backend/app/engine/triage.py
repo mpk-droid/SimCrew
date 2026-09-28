@@ -18,6 +18,7 @@ from app.engine.triage_verify import (
     prepare_workspace,
     spot_check_cluster,
 )
+from app.engine.usage import MeteredClient
 from app.models.run import Run, RunPersona
 
 logger = logging.getLogger(__name__)
@@ -324,7 +325,7 @@ async def _triage_run_body(run_id: str) -> None:
 
             client = None
             try:
-                client = _build_client(run.config or {})
+                client = MeteredClient(_build_client(run.config or {}))
             except Exception:
                 logger.warning("Triage LLM client unavailable", exc_info=True)
 
@@ -387,6 +388,7 @@ async def _triage_run_body(run_id: str) -> None:
                 "status": "complete",
                 "triaged_findings": triaged_findings,
                 "insights": insights,
+                "usage": client.snapshot() if client else {},
             }
             run.metadata_ = metadata
             flag_modified(run, "metadata_")

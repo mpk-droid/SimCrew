@@ -1,7 +1,10 @@
 replicaCount: 1
 
+serviceAccount:
+  name: ""
+
 image:
-  repository: quay.io/rh-ee-mpk/synthetic-users
+  repository: quay.io/rh-ee-mpk/simcrew
   tag: latest
   pullPolicy: IfNotPresent
 
@@ -32,7 +35,7 @@ env:
 
 agent:
   image:
-    repository: quay.io/rh-ee-mpk/synthetic-users
+    repository: quay.io/rh-ee-mpk/simcrew
     tag: latest
   resources:
     requests:
@@ -46,9 +49,9 @@ agent:
 postgresql:
   enabled: true
   auth:
-    database: synthetic_users
-    username: synthetic
-    password: synthetic
+    database: simcrew
+    username: simcrew
+    password: simcrew
   primary:
     persistence:
       size: 1Gi

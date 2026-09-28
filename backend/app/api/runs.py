@@ -83,6 +83,26 @@ def _set_phase_time(
     run.metadata_ = metadata
     flag_modified(run, "metadata_")
 
+def _set_persona_usage(run: Run, persona_id: str, usage: dict) -> None:
+    metadata = dict(run.metadata_ or {})
+    all_usage = dict(metadata.get("usage", {}))
+    all_usage[str(persona_id)] = usage
+    metadata["usage"] = all_usage
+    run.metadata_ = metadata
+    flag_modified(run, "metadata_")
+
+
+def _usage_summary(run: Run) -> dict:
+    """Per-persona and triage token usage, with totals across the run."""
+    metadata = run.metadata_ or {}
+    personas = metadata.get("usage", {})
+    triage = (metadata.get("triage") or {}).get("usage") or {}
+    total = {"calls": 0, "input_tokens": 0, "output_tokens": 0}
+    for entry in [*personas.values(), triage]:
+        for key in total:
+            total[key] += int(entry.get(key) or 0)
+    return {"personas": personas, "triage": triage, "total": total}
+
 
 def _parse_ts(value: str | None) -> datetime | None:
     if not value:
@@ -556,6 +576,7 @@ async def get_run(run_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
         "error": run.error,
         "created_at": run.created_at.isoformat(),
         "triage": (run.metadata_ or {}).get("triage"),
+        "usage": _usage_summary(run),
         "personas": [
             {
                 "id": str(rp.id),
@@ -749,6 +770,8 @@ async def agent_done(
         db.add(finding)
 
     run_row = await db.get(Run, run_id)
+    if run_row and data.usage:
+        _set_persona_usage(run_row, data.persona_id, data.usage)
     if run_row:
         journey_result = await db.execute(
             select(Journey)

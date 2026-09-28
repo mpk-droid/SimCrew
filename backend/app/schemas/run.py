@@ -68,3 +68,4 @@ class AgentDonePayload(BaseModel):
     findings: list[dict] = Field(default_factory=list)
     blocked_phase: str | None = None
     blocked_reason: str | None = None
+    usage: dict = Field(default_factory=dict)
