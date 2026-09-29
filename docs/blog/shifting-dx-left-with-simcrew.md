@@ -182,7 +182,7 @@ To show a run with nothing hidden, here is the first full run of the current bui
 
 **Setup.** The run used the four-persona baseline crew: Sam (junior backend dev), Dana (staff engineer), Priya (engineering director), and Kai (platform lead). It followed the five-phase generic journey on NVIDIA Nemotron 3 models and took 24 minutes.
 
-**Result.** The personas reported 114 raw findings, 27 of them critical. The score is computed as soon as the run ends, after a quick first merge of duplicates, and it came back RED with the rationale `24 critical finding(s) require immediate attention.` Triage then ran its stricter pass. It grouped the 114 findings into 110 clusters and rejected 25 of them as ones it could not confirm. Each rejection is recorded against the persona that reported it, which feeds the persona grading described below. That left 85 findings: 18 critical, 48 needing attention, and 19 nits. Triage verified 62 of the 85 against the repository. The other 23 stayed unverified, either because they could not be checked or because they rest only on several personas agreeing.
+**Result.** The personas reported 114 raw findings, 27 of them critical. The score is computed as soon as the run ends, after a quick first merge of duplicates, and it came back RED with the rationale `24 critical finding(s) require immediate attention.` Triage then ran its stricter pass. It grouped the 114 findings into 110 clusters and marked 25 of them as contradicted, dropping them from the report. Most of those were mistakes by triage, not by the personas (see "Keeping the findings honest" below). Each rejection is recorded against the persona that reported it, which feeds the persona grading described below. That left 85 findings: 18 critical, 48 needing attention, and 19 nits. Triage verified 62 of the 85 against the repository. The other 23 stayed unverified, either because they could not be checked or because they rest only on several personas agreeing.
 
 What it got right:
 
@@ -339,4 +339,3 @@ A Helm chart for Red Hat OpenShift and Kubernetes is in `chart/`, for when you w
 - Hu and Collier, [Quantifying the Persona Effect in LLM Simulations](https://arxiv.org/abs/2402.10811)
 - Lutz et al., [The Prompt Makes the Person(a): A Systematic Evaluation of Sociodemographic Persona Prompting for Large Language Models](https://arxiv.org/abs/2507.16076)
 - [UXAgent: An LLM agent-based usability testing framework](https://arxiv.org/abs/2502.12561)
-- [Red Hat OpenShift AI documentation](https://docs.redhat.com/en/documentation/red_hat_openshift_ai)
