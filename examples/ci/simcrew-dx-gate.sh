@@ -36,7 +36,7 @@ while :; do
   status=$(jq -r '.status // "unknown"' <<<"$RUN")
   triage=$(jq -r '.triage.status // "pending"' <<<"$RUN")
   case "$status" in
-    completed|failed) [[ "$triage" == complete || "$triage" == failed ]] && break ;;
+    completed|failed) [[ "$triage" == complete ]] && break ;;
     cancelled) echo "Run was cancelled." >&2; exit 2 ;;
   esac
   if (( $(date +%s) > deadline )); then
