@@ -3,6 +3,8 @@ name = "synthetic-users"
 version = "0.1.0"
 description = "AI synthetic users microservice — configurable persona-driven testing"
 requires-python = ">=3.12"
+license = {text = "Apache-2.0"}
+authors = [{name = "Muthukumaran PK"}]
 dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",

@@ -4,3 +4,11 @@ description: SimCrew orchestrator and persona agents
 version: 0.1.0
 appVersion: "0.1.0"
 type: application
+home: https://github.com/mpk-droid/SimCrew
+sources:
+  - https://github.com/mpk-droid/SimCrew
+maintainers:
+  - name: Muthukumaran PK
+    url: https://github.com/mpk-droid
+annotations:
+  licenses: Apache-2.0

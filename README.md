@@ -282,3 +282,15 @@ helm install simcrew ./chart \
 | `/api/prompts/generate` | POST | Preview prompt from structured fields |
 
 Full OpenAPI docs at http://localhost:8000/docs.
+
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) to get started, and [SECURITY.md](SECURITY.md) to report a vulnerability. Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Maintainer
+
+SimCrew was created by and is maintained by Muthukumaran PK ([@mpk-droid](https://github.com/mpk-droid)). See [MAINTAINERS.md](MAINTAINERS.md).
+
+## License
+
+SimCrew is licensed under the [Apache License 2.0](LICENSE).
