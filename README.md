@@ -1,5 +1,7 @@
 # SimCrew
 
+**[Website](https://mpk-droid.github.io/SimCrew/)**
+
 AI synthetic developers that test the developer experience of your software. Give it a git repo URL — it spins up isolated agent containers (one per persona), each clones the repo and evaluates it like a real developer. Findings are deduplicated, scored GREEN/YELLOW/RED, and viewable in the built-in UI.
 
 ## How It Works
