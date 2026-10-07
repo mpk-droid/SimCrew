@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SimCrew — AI synthetic developers that test your DX</title>
+<meta name="description" content="Give SimCrew a git repo URL. It spins up isolated agent containers, one per persona, each clones your repo and evaluates it like a real developer. Findings come back deduplicated, scored, and ready to act on.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+  :root {
+    --color-white: #ffffff;
+    --color-gray-50: #f9fafb;
+    --color-gray-100: #f3f4f6;
+    --color-gray-200: #e5e7eb;
+    --color-gray-300: #d1d5db;
+    --color-gray-500: #6b7280;
+    --color-gray-600: #4b5563;
+    --color-gray-700: #374151;
+    --color-gray-800: #1f2937;
+    --color-gray-900: #111827;
+
+    --color-green: #22c55e;
+    --color-yellow: #eab308;
+    --color-red: #ef4444;
+
+    --color-primary: #2563eb;
+    --color-primary-hover: #1d4ed8;
+
+    --border-radius: 6px;
+    --border-radius-lg: 10px;
+    --content-max-width: 1120px;
+
+    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-family);
+    color: var(--color-gray-800);
+    background: var(--color-white);
+    line-height: 1.5;
+  }
+
+  a { color: var(--color-primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .wrap {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* Nav */
+  header.nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--color-white);
+    border-bottom: 1px solid var(--color-gray-200);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--color-gray-900);
+  }
+  .brand img { width: 26px; height: 25px; }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .nav-links a { color: var(--color-gray-700); }
+  .nav-links a:hover { color: var(--color-gray-900); text-decoration: none; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--color-primary); color: var(--color-white); }
+  .btn-primary:hover { background: var(--color-primary-hover); text-decoration: none; }
+  .btn-outline { background: var(--color-white); color: var(--color-gray-800); border-color: var(--color-gray-300); }
+  .btn-outline:hover { border-color: var(--color-gray-500); text-decoration: none; }
+
+  @media (max-width: 720px) {
+    .nav-links a:not(.btn) { display: none; }
+  }
+
+  /* Hero */
+  .hero {
+    padding: 72px 0 56px;
+    background: linear-gradient(180deg, var(--color-gray-50) 0%, var(--color-white) 100%);
+    border-bottom: 1px solid var(--color-gray-200);
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-gray-600);
+    background: var(--color-gray-100);
+    border: 1px solid var(--color-gray-200);
+    border-radius: 999px;
+    padding: 5px 12px;
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-size: 44px;
+    line-height: 1.15;
+    font-weight: 800;
+    color: var(--color-gray-900);
+    max-width: 780px;
+    letter-spacing: -0.01em;
+  }
+  .hero p.lede {
+    margin-top: 18px;
+    font-size: 18px;
+    color: var(--color-gray-600);
+    max-width: 640px;
+  }
+  .cta-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+  .cta-row .btn { padding: 11px 20px; font-size: 15px; }
+
+  .scoring-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-top: 32px;
+    font-size: 13px;
+    color: var(--color-gray-500);
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .dot-green { background: var(--color-green); }
+  .dot-yellow { background: var(--color-yellow); }
+  .dot-red { background: var(--color-red); }
+
+  .code-box {
+    margin-top: 36px;
+    background: var(--color-gray-900);
+    border-radius: var(--border-radius-lg);
+    padding: 18px 20px;
+    max-width: 640px;
+    position: relative;
+  }
+  .code-box pre {
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    color: #e5e7eb;
+    overflow-x: auto;
+    line-height: 1.7;
+  }
+  .code-box .comment { color: #9ca3af; }
+  .copy-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: var(--color-gray-800);
+    color: var(--color-gray-200);
+    border: 1px solid var(--color-gray-700);
+    border-radius: var(--border-radius);
+    font-size: 12px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-family: var(--font-family);
+  }
+  .copy-btn:hover { background: var(--color-gray-700); }
+
+  /* Section shells */
+  section { padding: 64px 0; }
+  section.alt { background: var(--color-gray-50); border-top: 1px solid var(--color-gray-200); border-bottom: 1px solid var(--color-gray-200); }
+  .section-head { max-width: 640px; margin-bottom: 40px; }
+  .section-head .kicker {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+  }
+  .section-head h2 {
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--color-gray-900);
+    letter-spacing: -0.01em;
+  }
+  .section-head p {
+    margin-top: 10px;
+    color: var(--color-gray-600);
+    font-size: 16px;
+  }
+
+  /* How it works */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  .step {
+    background: var(--color-white);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--border-radius-lg);
+    padding: 22px;
+  }
+  .step .num {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-primary);
+    background: #eff6ff;
+    border-radius: 999px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+  .step h3 { font-size: 16px; font-weight: 700; color: var(--color-gray-900); margin-bottom: 6px; }
+  .step p { font-size: 14px; color: var(--color-gray-600); }
+
+  @media (max-width: 900px) {
+    .steps { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .steps { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 32px; }
+  }
+
+  /* Architecture diagram */
+  .diagram {
+    background: var(--color-gray-900);
+    border-radius: var(--border-radius-lg);
+    padding: 24px 28px;
+    overflow-x: auto;
+  }
+  .diagram pre {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    color: #d1d5db;
+    white-space: pre;
+  }
+  .diagram .hl { color: #93c5fd; }
+
+  /* Features grid */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .feature {
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--border-radius-lg);
+    padding: 24px;
+  }
+  .feature h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-gray-900);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .feature p { font-size: 14px; color: var(--color-gray-600); }
+  .badge-wip {
+    font-size: 11px;
+    font-weight: 700;
+    color: #92400e;
+    background: #fef3c7;
+    border-radius: 999px;
+    padding: 2px 8px;
+  }
+
+  @media (max-width: 900px) {
+    .features { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .features { grid-template-columns: 1fr; }
+  }
+
+  /* Personas table */
+  .personas {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .persona-card {
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--border-radius-lg);
+    padding: 20px;
+    background: var(--color-white);
+  }
+  .persona-card .name { font-size: 16px; font-weight: 700; color: var(--color-gray-900); }
+  .persona-card .role { font-size: 13px; color: var(--color-primary); font-weight: 600; margin-bottom: 10px; }
+  .persona-card .catches { font-size: 13px; color: var(--color-gray-600); }
+
+  @media (max-width: 900px) {
+    .personas { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .personas { grid-template-columns: 1fr; }
+  }
+
+  /* Footer */
+  footer {
+    background: var(--color-gray-900);
+    color: var(--color-gray-300);
+    padding: 48px 0 32px;
+  }
+  footer .foot-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 24px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--color-gray-700);
+  }
+  footer .brand { color: var(--color-white); }
+  footer .foot-links {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    font-size: 14px;
+  }
+  footer .foot-links a { color: var(--color-gray-300); }
+  footer .foot-links a:hover { color: var(--color-white); }
+  footer .foot-bottom {
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--color-gray-500);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <div class="brand"><img src="favicon.svg" alt=""> SimCrew</div>
+    <nav class="nav-links">
+      <a href="#how-it-works">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#personas">Personas</a>
+      <a href="#quick-start">Quick start</a>
+      <a class="btn btn-primary" href="https://github.com/mpk-droid/SimCrew">View on GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Open source · Apache 2.0</span>
+    <h1>AI synthetic developers that test your developer experience.</h1>
+    <p class="lede">
+      Give SimCrew a git repo URL. It spins up isolated agent containers &mdash; one per persona &mdash;
+      each clones your repo and evaluates it like a real developer. Findings come back deduplicated,
+      scored, and ready to act on.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="#quick-start">Get started</a>
+      <a class="btn btn-outline" href="https://github.com/mpk-droid/SimCrew">View on GitHub</a>
+    </div>
+    <div class="scoring-row">
+      <span><span class="dot dot-green"></span>Green &mdash; no issues</span>
+      <span><span class="dot dot-yellow"></span>Yellow &mdash; needs attention</span>
+      <span><span class="dot dot-red"></span>Red &mdash; critical</span>
+    </div>
+    <div class="code-box" id="quick-start">
+      <button class="copy-btn" onclick="copyCmd()" id="copyBtn">Copy</button>
+      <pre id="cmd"><span class="comment"># clone and run</span>
+git clone git@github.com:mpk-droid/SimCrew.git &amp;&amp; cd SimCrew
+export NVIDIA_API_KEY=nvapi-...  <span class="comment"># or ANTHROPIC_API_KEY</span>
+docker compose up</pre>
+    </div>
+  </div>
+</section>
+
+<section id="how-it-works">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">How it works</div>
+      <h2>From repo URL to scored report</h2>
+      <p>Four steps, no custom harness to write.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <h3>Define personas</h3>
+        <p>Identity, perspective, and constraints &mdash; e.g. "backend developer who's never used AI" or "platform engineer evaluating for OpenShift."</p>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <h3>Define a journey</h3>
+        <p>Ordered phases like "Read the docs," "Set up locally," "Test the API," "Try deploying."</p>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <h3>Point at a repo</h3>
+        <p>Provide a git repository URL. That's the only input a run needs.</p>
+      </div>
+      <div class="step">
+        <div class="num">4</div>
+        <h3>Get a report</h3>
+        <p>Each persona clones the repo independently, follows the journey, and reports findings with evidence.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">Architecture</div>
+      <h2>One container per persona</h2>
+      <p>The orchestrator manages the full lifecycle &mdash; spin-up, cloning, collection, cleanup.</p>
+    </div>
+    <div class="diagram">
+<pre>repo_url ──▶ <span class="hl">Orchestrator</span> (FastAPI + Postgres)
+                   │
+        ┌──────────┼──────────┐
+        │          │          │
+   Agent: Priya  Agent: Sam  Agent: Dana  ...
+   (container)   (container) (container)
+        │          │          │
+   git clone    git clone   git clone
+   read docs    follow setup read source
+   run commands try to run  test edges
+        │          │          │
+        └────▶ <span class="hl">Findings</span> ◀────┘
+                   │
+           Deduplicate &amp; Score
+           (GREEN / YELLOW / RED)</pre>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">Features</div>
+      <h2>What SimCrew gives you</h2>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <h3>Isolated agent containers</h3>
+        <p>Every persona runs in its own Docker container, cloning and evaluating the target repo independently &mdash; no shared state between runs.</p>
+      </div>
+      <div class="feature">
+        <h3>Structured personas</h3>
+        <p>Personas are defined by fields, not raw prompts. SimCrew generates the system prompt, and you review and approve it before it's used.</p>
+      </div>
+      <div class="feature">
+        <h3>Ordered journeys</h3>
+        <p>Journeys are sequences of phases each persona follows independently, from first impressions through deployment.</p>
+      </div>
+      <div class="feature">
+        <h3>Dedup &amp; scoring</h3>
+        <p>Findings across personas are deduplicated and scored GREEN / YELLOW / RED, so you see what actually matters first.</p>
+      </div>
+      <div class="feature">
+        <h3>Built-in UI + API</h3>
+        <p>Run evaluations from the included UI or drive everything through the REST API &mdash; full OpenAPI docs included.</p>
+      </div>
+      <div class="feature">
+        <h3>Custom environments <span class="badge-wip">WIP</span></h3>
+        <p>Extend the base agent image to simulate a different OS or toolchain per persona. In active development.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="personas">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">Built-in DX evaluation</div>
+      <h2>Four personas, ready to run</h2>
+      <p>Paired with a 5-phase journey: First Impressions → Setup → Running Locally → Using the Target → Deployment.</p>
+    </div>
+    <div class="personas">
+      <div class="persona-card">
+        <div class="name">Priya</div>
+        <div class="role">Engineering Director</div>
+        <div class="catches">Catches unclear value props, jargon-heavy docs, missing business context.</div>
+      </div>
+      <div class="persona-card">
+        <div class="name">Sam</div>
+        <div class="role">AI Novice (backend dev)</div>
+        <div class="catches">Catches unexplained AI terminology, missing setup guidance, assumed knowledge.</div>
+      </div>
+      <div class="persona-card">
+        <div class="name">Dana</div>
+        <div class="role">Production Engineer</div>
+        <div class="catches">Catches poor error handling, tight coupling, production anti-patterns.</div>
+      </div>
+      <div class="persona-card">
+        <div class="name">Kai</div>
+        <div class="role">Platform Engineer</div>
+        <div class="catches">Catches missing resource limits, deployment issues, operational gaps.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="brand">SimCrew</div>
+      <div class="foot-links">
+        <a href="https://github.com/mpk-droid/SimCrew">GitHub</a>
+        <a href="https://github.com/mpk-droid/SimCrew#readme">Docs</a>
+        <a href="https://github.com/mpk-droid/SimCrew/blob/main/CONTRIBUTING.md">Contributing</a>
+        <a href="https://github.com/mpk-droid/SimCrew/blob/main/SECURITY.md">Security</a>
+        <a href="https://github.com/mpk-droid/SimCrew/blob/main/LICENSE">License</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>&copy; 2026 SimCrew &mdash; Apache License 2.0</span>
+      <span>Created and maintained by <a href="https://github.com/mpk-droid">@mpk-droid</a></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+function copyCmd() {
+  var text = "git clone git@github.com:mpk-droid/SimCrew.git && cd SimCrew\nexport NVIDIA_API_KEY=nvapi-...\ndocker compose up";
+  navigator.clipboard.writeText(text).then(function () {
+    var btn = document.getElementById('copyBtn');
+    var original = btn.textContent;
+    btn.textContent = 'Copied';
+    setTimeout(function () { btn.textContent = original; }, 1500);
+  });
+}
+</script>
+
+</body>
+</html>
