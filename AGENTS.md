@@ -109,6 +109,7 @@ Open dev UI at http://localhost:5174 — not :5173.
 | `SU_ROLE` | No | `orchestrator` (default) or `agent` |
 | `SU_AGENT_IMAGE` | No | Docker image for agent containers (default: `synthetic-users:latest`) |
 | `SU_DOCKER_NETWORK` | No | Docker network for agent containers |
+| `SU_AGENT_RUN_TIMEOUT` | No | Seconds to wait for all personas in a run before failing it (default `1800`) |
 
 Copy `.env.example` to `.env` for local shell exports. Docker Compose reads `ANTHROPIC_API_KEY` and `ANTHROPIC_VERTEX_PROJECT_ID` from your environment.
 

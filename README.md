@@ -251,6 +251,7 @@ The cluster or Docker host running agents must be able to **pull** the image. Pu
 | `SU_ROLE` | No | `orchestrator` (default) or `agent` |
 | `SU_AGENT_IMAGE` | No | Image for agent containers (default `simcrew:latest`) |
 | `SU_DOCKER_NETWORK` | No | Docker network for agent containers (default `simcrew`) |
+| `SU_AGENT_RUN_TIMEOUT` | No | Seconds to wait for all personas in a run before failing it (default `1800`; raise it for long journeys or rate-limited keys) |
 | `SU_ALLOWED_REPO_SCHEMES` | No | Comma-separated URL schemes accepted for `repo_url` (default `https`; `git@host:path` is always accepted) |
 
 ## Deploying to OpenShift / Kubernetes
