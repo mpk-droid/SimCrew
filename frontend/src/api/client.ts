@@ -15,6 +15,17 @@ import type {
   RunDetailResponse,
 } from '../types';
 
+function errorDetail(text: string): string | null {
+  try {
+    const { detail } = JSON.parse(text);
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) return detail.map((d) => d.msg).join('; ');
+  } catch {
+    // not JSON
+  }
+  return null;
+}
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -22,7 +33,7 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(`${res.status} ${res.statusText}: ${text}`);
+    throw new Error(errorDetail(text) || `${res.status} ${res.statusText}: ${text}`);
   }
   if (res.status === 204) return undefined as T;
   return res.json();

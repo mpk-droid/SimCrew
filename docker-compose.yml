@@ -1,3 +1,5 @@
+name: simcrew
+
 services:
   db:
     image: postgres:16-alpine
@@ -6,7 +8,7 @@ services:
       POSTGRES_USER: synthetic
       POSTGRES_PASSWORD: synthetic
     ports:
-      - "5432:5432"
+      - "127.0.0.1:${SIMCREW_DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -19,29 +21,35 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: simcrew:latest
+    # Root so the orchestrator can use the host Docker socket on Linux too.
+    user: "0"
     ports:
-      - "8000:8000"
+      - "${SIMCREW_PORT:-8000}:8000"
     environment:
       SU_ROLE: orchestrator
       DATABASE_URL: postgresql+asyncpg://synthetic:synthetic@db:5432/synthetic_users
-      ANTHROPIC_VERTEX_PROJECT_ID: ${ANTHROPIC_VERTEX_PROJECT_ID:-}
-      CLOUD_ML_REGION: us-east5
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
       NVIDIA_NIM_BASE_URL: ${NVIDIA_NIM_BASE_URL:-https://integrate.api.nvidia.com/v1}
       NVIDIA_NIM_MODEL: ${NVIDIA_NIM_MODEL:-nvidia/nemotron-3-ultra-550b-a55b}
       NVIDIA_NIM_FALLBACK_MODEL: ${NVIDIA_NIM_FALLBACK_MODEL:-nvidia/nemotron-3-super-120b-a12b}
-      GOOGLE_APPLICATION_CREDENTIALS: /gcp/application_default_credentials.json
-      SU_AGENT_IMAGE: synthetic-users-app:latest
-      SU_DOCKER_NETWORK: synthetic-users_default
+      MODELS_CORP_API_KEY: ${MODELS_CORP_API_KEY:-}
+      MODELS_CORP_URL: ${MODELS_CORP_URL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_VERTEX_PROJECT_ID: ${ANTHROPIC_VERTEX_PROJECT_ID:-}
+      CLOUD_ML_REGION: ${CLOUD_ML_REGION:-us-east5}
+      SU_AGENT_IMAGE: simcrew:latest
+      SU_DOCKER_NETWORK: simcrew
       SU_ORCHESTRATOR_HOST: app
-      SU_GCP_CREDENTIALS_HOST_PATH: ${HOME}/.config/gcloud/application_default_credentials.json
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.config/gcloud/application_default_credentials.json:/gcp/application_default_credentials.json:ro
+
+networks:
+  default:
+    name: simcrew
 
 volumes:
   pgdata:

@@ -17,32 +17,42 @@ Findings are scored GREEN / YELLOW / RED and stored in a database. A built-in UI
 
 ### Prerequisites
 
-- Docker and Docker Compose
-- One of: `NVIDIA_API_KEY` (recommended), `ANTHROPIC_API_KEY`, or Vertex AI credentials (`ANTHROPIC_VERTEX_PROJECT_ID` + `CLOUD_ML_REGION`)
+- Docker with Docker Compose v2 (Docker Desktop, or Docker Engine on Linux)
+- An LLM key. The easiest is a free `NVIDIA_API_KEY` from [build.nvidia.com](https://build.nvidia.com/settings). `MODELS_CORP_API_KEY` + `MODELS_CORP_URL`, `ANTHROPIC_API_KEY`, and Vertex AI also work.
 
-### Run with Docker Compose
+### Run locally
 
 ```bash
-git clone <repo-url> && cd SimCrew
-
-# Set your LLM credentials
-export NVIDIA_API_KEY=nvapi-...  # https://build.nvidia.com/settings
-export ANTHROPIC_VERTEX_PROJECT_ID=your-project-id
-export CLOUD_ML_REGION=us-east5
-# Or: export ANTHROPIC_API_KEY=sk-...
-
-# Start everything
-docker compose up
+git clone https://github.com/mpk-droid/SimCrew.git && cd SimCrew
+echo "NVIDIA_API_KEY=nvapi-..." > .env   # your key; .env is gitignored
+docker compose up --build
 ```
 
-The app is at **http://localhost:8000** — API, UI, and health check all on one port.
+Open **http://localhost:8000**. The first build takes a few minutes.
+
+Port already taken? Set `SIMCREW_PORT=8001` (UI) or `SIMCREW_DB_PORT=5433` (Postgres) in `.env`.
+
+For Vertex AI, run `gcloud auth application-default login`, put `ANTHROPIC_VERTEX_PROJECT_ID` and `CLOUD_ML_REGION` in `.env`, and start with `docker compose -f docker-compose.yml -f docker-compose.vertex.yml up --build`.
+
+### Run on your cluster (OpenShift)
+
+```bash
+git clone https://github.com/mpk-droid/SimCrew.git && cd SimCrew
+oc new-project simcrew
+helm install simcrew ./chart --set secrets.nvidiaApiKey=nvapi-...
+oc get route simcrew -o jsonpath='https://{.spec.host}{"\n"}'
+```
+
+The chart deploys the orchestrator, a Postgres database, and the RBAC that lets the orchestrator start one agent Job per persona. Agent pods run code from the repos they evaluate, so a NetworkPolicy keeps them off the cluster network. They can reach the orchestrator, DNS, and the public internet only. If your LLM endpoint has a private IP, add it with `--set networkPolicy.extraEgressCIDRs={10.1.2.0/24}`.
+
+On plain Kubernetes, add `--set route.enabled=false` and expose the `simcrew` service with your own Ingress.
 
 ### Run Your First Evaluation
 
 **Via the UI:**
-1. Open http://localhost:8000
-2. Built-in personas and journeys (DX evaluation + smoke test) are pre-loaded on startup
-3. Click "New Run", enter a repository URL, select personas, and start
+1. Open http://localhost:8000. Built-in personas and journeys (DX evaluation and smoke test) load on startup.
+2. Check your setup with a quick run: **New Run** → repo `https://github.com/mpk-droid/synthetic-users-smoke-test.git`, journey **Smoke Test Journey**, personas **Alex (Test)**, **Blake (Test)**, **Casey (Test)**.
+3. Then evaluate your own repo with the **DX Evaluation** journey and the Priya, Sam, Dana, and Kai personas.
 
 **Via the API:**
 
@@ -97,19 +107,13 @@ The same Docker image serves both roles via `SU_ROLE` environment variable:
 - `orchestrator` (default) — runs the FastAPI app with UI, DB, and container management
 - `agent` — runs a lightweight server that clones repos and executes the LLM tool-use loop
 
-## Cursor
-
-This repo is set up for [Cursor](https://cursor.com) (not Claude Code CLI):
+## Working on SimCrew with coding agents
 
 | File | Purpose |
 |------|---------|
 | `AGENTS.md` | Project context for any coding agent |
-| `.cursor/rules/` | Scoped rules (always-on project context, backend Python, frontend React) |
-| `.vscode/tasks.json` | Run tasks via **Cmd+Shift+P → Tasks: Run Task** |
-
-**Quick start in Cursor:** Run task `docker: up` (full stack on http://localhost:8000) or `dev: full stack` (Postgres + hot-reload backend and frontend).
-
-`.claude/` is ignored by git — use it only if you also use Claude Code CLI.
+| `.cursor/rules/` | Scoped rules for Cursor (project context, backend Python, frontend React) |
+| `.vscode/tasks.json` | Editor tasks: `docker: up` (full stack) and `dev: full stack` (hot reload) |
 
 ## Local Development
 
@@ -128,7 +132,7 @@ DATABASE_URL="postgresql+asyncpg://synthetic:synthetic@localhost:5432/synthetic_
 # Frontend (Vite dev server with API proxy)
 cd frontend
 npm install
-npm run dev    # opens on :5174, proxies /api/* to :8000 (:5173 is Gmail Buddy)
+npm run dev    # opens on :5174, proxies /api/* to :8000
 ```
 
 ## Creating Custom Personas
@@ -190,10 +194,10 @@ And a 5-phase journey: First Impressions → Setup → Running Locally → Using
 
 Agents run inside container images. **Default** uses the built-in SimCrew agent image. To simulate a different OS or toolchain, publish a variant of the base image and register it as an Environment.
 
-**Base image (published on Quay):**
+**Base image:**
 
 ```
-quay.io/rh-ee-mpk/synthetic-users:latest
+ghcr.io/mpk-droid/simcrew:latest
 ```
 
 This image includes the SimCrew agent server (`SU_ROLE=agent`). Custom environment images must extend it — do not use an unrelated container image.
@@ -204,14 +208,14 @@ This image includes the SimCrew agent server (`SU_ROLE=agent`). Custom environme
 # Start from the example
 cp examples/environment/Dockerfile ./Dockerfile.env
 # Edit: add packages, change OS tooling, etc.
-docker build -f Dockerfile.env -t quay.io/rh-ee-mpk/synthetic-users-fedora:latest .
-docker push quay.io/rh-ee-mpk/synthetic-users-fedora:latest
+docker build -f Dockerfile.env -t quay.io/<you>/simcrew-fedora:latest .
+docker push quay.io/<you>/simcrew-fedora:latest
 ```
 
 Minimal `Dockerfile`:
 
 ```dockerfile
-FROM quay.io/rh-ee-mpk/synthetic-users:latest
+FROM ghcr.io/mpk-droid/simcrew:latest
 
 USER 0
 RUN dnf install -y --nodocs <your-packages> && dnf clean all
@@ -222,7 +226,7 @@ USER 1001
 
 1. Open **Environments** → **Add Environment**
 2. **Name** — e.g. `Fedora + Go`
-3. **Docker Image** — your pushed image (e.g. `quay.io/rh-ee-mpk/synthetic-users-fedora:latest`)
+3. **Docker Image** — your pushed image (e.g. `quay.io/<you>/simcrew-fedora:latest`)
 4. **Description** — optional; shown in the persona prompt (e.g. `Fedora 40 with Go installed`)
 
 ### 3. Use on a run
@@ -238,32 +242,27 @@ The cluster or Docker host running agents must be able to **pull** the image. Pu
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `DATABASE_URL` | Yes (orchestrator) | PostgreSQL connection string (asyncpg) |
-| `ANTHROPIC_VERTEX_PROJECT_ID` | One of these | Vertex AI project ID |
-| `CLOUD_ML_REGION` | | Vertex AI region |
-| `ANTHROPIC_API_KEY` | | Direct Anthropic API key (if not using Vertex) |
+| `NVIDIA_API_KEY` | One LLM option | NVIDIA NIM key from [build.nvidia.com](https://build.nvidia.com/settings) |
+| `MODELS_CORP_API_KEY`, `MODELS_CORP_URL` | One LLM option | Models.Corp MaaS key and endpoint |
+| `ANTHROPIC_API_KEY` | One LLM option | Direct Anthropic API key |
+| `ANTHROPIC_VERTEX_PROJECT_ID`, `CLOUD_ML_REGION` | One LLM option | Vertex AI project and region |
 | `SU_ROLE` | No | `orchestrator` (default) or `agent` |
-| `SU_AGENT_IMAGE` | No | Docker image for agent containers |
-| `SU_DOCKER_NETWORK` | No | Docker network for agent containers |
+| `SU_AGENT_IMAGE` | No | Image for agent containers (default `simcrew:latest`) |
+| `SU_DOCKER_NETWORK` | No | Docker network for agent containers (default `simcrew`) |
+| `SU_ALLOWED_REPO_SCHEMES` | No | Comma-separated URL schemes accepted for `repo_url` (default `https`; `git@host:path` is always accepted) |
 
 ## Deploying to OpenShift / Kubernetes
 
-### Build and Push the Image
+See [Run on your cluster](#run-on-your-cluster-openshift) for the basic install. The chart uses the public image `ghcr.io/mpk-droid/simcrew`, which is rebuilt for amd64 and arm64 on every push to `main`. Common overrides:
 
-```bash
-docker build -t quay.io/rh-ee-mpk/synthetic-users:latest .
-docker push quay.io/rh-ee-mpk/synthetic-users:latest
-```
-
-### Deploy with Helm
-
-```bash
-helm install simcrew ./chart \
-  --set image.repository=quay.io/rh-ee-mpk/synthetic-users \
-  --set image.tag=latest \
-  --set secrets.vertexProjectId=your-gcp-project \
-  --set secrets.vertexRegion=us-east5 \
-  --set postgresql.auth.password=your-db-password
-```
+| Value | Purpose |
+|-------|---------|
+| `secrets.nvidiaApiKey`, `secrets.modelsCorpApiKey` + `secrets.modelsCorpUrl`, `secrets.anthropicApiKey` | LLM credentials |
+| `image.repository`, `image.tag` | Use your own build |
+| `route.host` | Custom hostname for the Route |
+| `postgresql.persistence.size`, `postgresql.persistence.storageClass` | Database volume |
+| `postgresql.enabled=false` + `externalDatabaseUrl` | Use an existing database |
+| `networkPolicy.extraEgressCIDRs` | Private ranges agents may reach (e.g. an internal LLM endpoint) |
 
 ## API Reference
 

@@ -17,6 +17,28 @@ logger = logging.getLogger(__name__)
 MAX_ITERATIONS = 50
 
 
+_CREDENTIAL_SOURCES = (
+    ("nvidia_api_key", "NVIDIA_API_KEY"),
+    ("models_corp_api_key", "MODELS_CORP_API_KEY"),
+    ("vertex_project_id", "ANTHROPIC_VERTEX_PROJECT_ID"),
+    (None, "ANTHROPIC_API_KEY"),
+)
+
+MISSING_CREDENTIALS_DETAIL = (
+    "No LLM credentials configured. Set NVIDIA_API_KEY (free at "
+    "https://build.nvidia.com/settings), MODELS_CORP_API_KEY, ANTHROPIC_API_KEY, "
+    "or ANTHROPIC_VERTEX_PROJECT_ID. Locally: add it to .env and restart "
+    "docker compose. On a cluster: helm upgrade with --set secrets.nvidiaApiKey=..."
+)
+
+
+def has_llm_credentials(config: dict) -> bool:
+    return any(
+        (key and config.get(key)) or os.environ.get(env)
+        for key, env in _CREDENTIAL_SOURCES
+    )
+
+
 def _build_client(config: dict):
     nvidia_api_key = config.get("nvidia_api_key") or os.environ.get("NVIDIA_API_KEY")
     if nvidia_api_key:

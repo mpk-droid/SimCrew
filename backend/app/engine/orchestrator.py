@@ -91,7 +91,7 @@ class AgentOrchestrator(abc.ABC):
 
     def __init__(self, config: dict | None = None):
         self.config = config or {}
-        self.agent_image = os.environ.get("SU_AGENT_IMAGE", "synthetic-users:latest")
+        self.agent_image = os.environ.get("SU_AGENT_IMAGE", "simcrew:latest")
 
     async def run_all(
         self,
@@ -276,9 +276,7 @@ class DockerOrchestrator(AgentOrchestrator):
 
     def __init__(self, config: dict | None = None):
         super().__init__(config)
-        self.network_name = os.environ.get(
-            "SU_DOCKER_NETWORK", "synthetic-users_default"
-        )
+        self.network_name = os.environ.get("SU_DOCKER_NETWORK", "simcrew")
         self._docker_client = None
         self._containers: dict[str, object] = {}
 
@@ -501,6 +499,8 @@ class KubernetesOrchestrator(AgentOrchestrator):
                         spec=k8s_client.V1PodSpec(
                             containers=[container],
                             restart_policy="Never",
+                            # Agents run untrusted repo code; no cluster API token.
+                            automount_service_account_token=False,
                         ),
                     ),
                 ),
