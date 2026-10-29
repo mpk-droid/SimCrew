@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import tempfile
 from pathlib import Path
 
@@ -156,13 +157,18 @@ async def clone_repo(
 ) -> None:
     env = None
     if credentials:
-        env = {"GIT_ASKPASS": "echo", "GIT_PASSWORD": credentials}
+        env = {**os.environ, "GIT_ASKPASS": "echo", "GIT_PASSWORD": credentials}
 
-    cmd = f"git clone --depth 1 {repo_url} {clone_path}"
     logger.info("Cloning %s into %s", repo_url, clone_path)
 
-    proc = await asyncio.create_subprocess_shell(
-        cmd,
+    proc = await asyncio.create_subprocess_exec(
+        "git",
+        "clone",
+        "--depth",
+        "1",
+        "--",
+        repo_url,
+        clone_path,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
         env=env,
