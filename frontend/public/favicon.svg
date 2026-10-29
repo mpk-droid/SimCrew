@@ -17,7 +17,7 @@
     <path d="M3.3 14A12.7 12.7 0 0 1 28.7 14" opacity=".35"/>
   </g>
   <circle cx="16" cy="14" r="4.5" fill="#2563eb"/>
-  <g fill="#f97316">
+  <g fill="#fff">
     <rect x="13.4" y="12.3" width="1.6" height="3.4" rx=".8"/>
     <rect x="17" y="12.3" width="1.6" height="3.4" rx=".8"/>
   </g>
