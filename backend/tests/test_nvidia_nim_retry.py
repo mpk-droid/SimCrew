@@ -12,7 +12,7 @@ from app.engine.nvidia_nim import NvidiaNimMessages
 OK = {"choices": [{"message": {"content": "hi"}, "finish_reason": "stop"}]}
 
 
-def _client(statuses: list[int], seen: list[str]) -> NvidiaNimMessages:
+def _client(statuses: list[int], seen: list[str], fallback="fallback"):
     replies = iter(statuses)
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -24,7 +24,7 @@ def _client(statuses: list[int], seen: list[str]) -> NvidiaNimMessages:
         base_url="https://nim.test/v1",
         api_key="k",
         default_model="primary",
-        fallback_model="fallback",
+        fallback_model=fallback,
     )
     nim._client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
     return nim
@@ -44,23 +44,31 @@ def no_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(nvidia_nim.asyncio, "sleep", instant)
 
 
-def test_transient_404_is_retried() -> None:
+def test_rate_limits_are_waited_out_past_the_error_retry_budget() -> None:
     seen: list[str] = []
-    result = _call(_client([404, 200], seen))
+    statuses = [429] * (nvidia_nim.MAX_RETRIES * 3) + [200]
+    result = _call(_client(statuses, seen))
     assert result.content[0].text == "hi"
-    assert seen == ["primary", "primary"]
+    assert set(seen) == {"primary"}
 
 
-def test_persistent_404_falls_back_to_second_model() -> None:
+def test_rate_limit_that_never_clears_raises_a_clear_error() -> None:
     seen: list[str] = []
-    statuses = [404] * nvidia_nim.MAX_RETRIES + [200]
+    statuses = [429] * (nvidia_nim.MAX_RATE_LIMIT_WAITS + 1)
+    with pytest.raises(RuntimeError, match="rate limit"):
+        _call(_client(statuses, seen, fallback=None))
+
+
+def test_server_errors_retry_then_fall_back() -> None:
+    seen: list[str] = []
+    statuses = [503] * nvidia_nim.MAX_RETRIES + [200]
     result = _call(_client(statuses, seen))
     assert result.content[0].text == "hi"
     assert seen[-1] == "fallback"
 
 
-def test_client_errors_other_than_404_fail_fast() -> None:
+def test_404_fails_fast() -> None:
     seen: list[str] = []
     with pytest.raises(httpx.HTTPStatusError):
-        _call(_client([400], seen))
+        _call(_client([404], seen))
     assert seen == ["primary"]

@@ -16,8 +16,10 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_BASE_URL = "https://integrate.api.nvidia.com/v1"
 DEFAULT_MODEL = "nvidia/nemotron-3-ultra-550b-a55b"
-FALLBACK_MODEL = "nvidia/nemotron-3-super-120b-a12b"
+FALLBACK_MODEL: str | None = None
 MAX_RETRIES = 5
+# Shared free-tier keys rate-limit under parallel personas; wait instead of failing.
+MAX_RATE_LIMIT_WAITS = 40
 
 
 def _block_attr(block: Any, key: str, default: Any = None) -> Any:
@@ -150,11 +152,6 @@ def _resolve_model(model: str, default_model: str) -> str:
     return model
 
 
-def _is_transient(status_code: int) -> bool:
-    # The hosted NIM API intermittently answers 404 for models it does serve.
-    return status_code == 404 or status_code >= 500
-
-
 def _models_to_try(primary: str, fallback: str | None) -> list[str]:
     models = [primary]
     if fallback and fallback != primary:
@@ -210,16 +207,25 @@ class NvidiaNimMessages:
 
         for model_index, current_model in enumerate(models):
             body["model"] = current_model
-            for attempt in range(MAX_RETRIES):
+            attempt = 0
+            rate_limit_waits = 0
+            while attempt < MAX_RETRIES:
                 response = await self._client.post(url, headers=headers, json=body)
                 if response.status_code == 429:
+                    if rate_limit_waits >= MAX_RATE_LIMIT_WAITS:
+                        last_error = RuntimeError(
+                            f"NVIDIA NIM rate limit on {current_model} did not clear "
+                            f"after {rate_limit_waits} waits"
+                        )
+                        break
+                    rate_limit_waits += 1
                     retry_after = int(response.headers.get("Retry-After", "15"))
                     logger.warning(
-                        "NVIDIA NIM rate limited (429) on %s; retrying in %ss (%s/%s)",
+                        "NVIDIA NIM rate limited (429) on %s; waiting %ss (%s/%s)",
                         current_model,
                         retry_after,
-                        attempt + 1,
-                        MAX_RETRIES,
+                        rate_limit_waits,
+                        MAX_RATE_LIMIT_WAITS,
                     )
                     await asyncio.sleep(retry_after)
                     continue
@@ -235,11 +241,12 @@ class NvidiaNimMessages:
                     return _openai_response_to_anthropic(response.json())
                 except httpx.HTTPStatusError as exc:
                     last_error = exc
-                    transient = _is_transient(response.status_code)
-                    if transient and attempt < MAX_RETRIES - 1:
+                    server_error = response.status_code >= 500
+                    if server_error and attempt < MAX_RETRIES - 1:
                         await asyncio.sleep(2**attempt)
+                        attempt += 1
                         continue
-                    if transient and model_index < len(models) - 1:
+                    if server_error and model_index < len(models) - 1:
                         logger.warning(
                             "NVIDIA NIM model %s failed with HTTP %s after %s "
                             "retries; falling back to %s",
