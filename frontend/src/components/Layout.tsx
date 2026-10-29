@@ -31,7 +31,7 @@ export default function Layout() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <h1 className="sidebar-title">
-            <img src="/favicon.svg" alt="" width={26} height={26} />
+            <img src="/favicon.svg?v=2" alt="" width={26} height={26} />
             SimCrew
           </h1>
         </div>
