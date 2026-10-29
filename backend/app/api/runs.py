@@ -14,7 +14,11 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from app.api.environments import ENVIRONMENTS_WIP_DETAIL
 from app.db.session import async_session, get_db
-from app.engine.runner import execute_orchestrated_run
+from app.engine.runner import (
+    MISSING_CREDENTIALS_DETAIL,
+    execute_orchestrated_run,
+    has_llm_credentials,
+)
 from app.models.environment import Environment
 from app.models.finding import Finding as FindingModel
 from app.models.finding import normalize_severity
@@ -449,6 +453,8 @@ async def create_run(
 ):
     if any(pe.environment_id for pe in data.persona_environments):
         raise HTTPException(400, ENVIRONMENTS_WIP_DETAIL)
+    if not has_llm_credentials(data.config):
+        raise HTTPException(400, MISSING_CREDENTIALS_DETAIL)
 
     run = Run(
         name=data.name,

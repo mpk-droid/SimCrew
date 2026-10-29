@@ -6,6 +6,9 @@ metadata:
   labels:
     {{- include "simcrew.labels" . | nindent 4 }}
 spec:
+  {{- with .Values.route.host }}
+  host: {{ . }}
+  {{- end }}
   to:
     kind: Service
     name: {{ include "simcrew.fullname" . }}

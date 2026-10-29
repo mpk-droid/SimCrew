@@ -1,0 +1,90 @@
+{{- if .Values.postgresql.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "simcrew.postgresqlName" . }}
+  labels:
+    {{- include "simcrew.labels" . | nindent 4 }}
+spec:
+  accessModes: ["ReadWriteOnce"]
+  {{- with .Values.postgresql.persistence.storageClass }}
+  storageClassName: {{ . }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.postgresql.persistence.size }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "simcrew.postgresqlName" . }}
+  labels:
+    {{- include "simcrew.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "simcrew.postgresqlSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "simcrew.postgresqlSelectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: postgresql
+          image: {{ .Values.postgresql.image }}
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRESQL_USER
+              value: {{ .Values.postgresql.auth.username | quote }}
+            - name: POSTGRESQL_DATABASE
+              value: {{ .Values.postgresql.auth.database | quote }}
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "simcrew.fullname" . }}
+                  key: POSTGRESQL_PASSWORD
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-h", "127.0.0.1", "-p", "5432"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-h", "127.0.0.1", "-p", "5432"]
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 50m
+            limits:
+              memory: 512Mi
+              cpu: 500m
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/pgsql/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "simcrew.postgresqlName" . }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "simcrew.postgresqlName" . }}
+  labels:
+    {{- include "simcrew.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "simcrew.postgresqlSelectorLabels" . | nindent 4 }}
+  ports:
+    - port: 5432
+      targetPort: 5432
+{{- end }}

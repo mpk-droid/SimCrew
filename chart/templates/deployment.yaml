@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "simcrew.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: 1
   selector:
     matchLabels:
       {{- include "simcrew.selectorLabels" . | nindent 6 }}
@@ -14,9 +14,7 @@ spec:
       labels:
         {{- include "simcrew.selectorLabels" . | nindent 8 }}
     spec:
-      {{- if .Values.serviceAccount.name }}
-      serviceAccountName: {{ .Values.serviceAccount.name }}
-      {{- end }}
+      serviceAccountName: {{ include "simcrew.serviceAccountName" . }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -26,11 +24,11 @@ spec:
               protocol: TCP
           env:
             - name: SU_ROLE
-              value: {{ .Values.env.SU_ROLE | quote }}
+              value: orchestrator
             - name: SU_ORCHESTRATOR
               value: "kubernetes"
             - name: SU_AGENT_IMAGE
-              value: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              value: {{ .Values.agent.image | default (printf "%s:%s" .Values.image.repository .Values.image.tag) | quote }}
             - name: SU_K8S_NAMESPACE
               valueFrom:
                 fieldRef:

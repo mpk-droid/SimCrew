@@ -1,7 +1,7 @@
 apiVersion: v2
 name: simcrew
 description: SimCrew orchestrator and persona agents
-version: 0.1.0
+version: 0.2.0
 appVersion: "0.1.0"
 type: application
 home: https://github.com/mpk-droid/SimCrew

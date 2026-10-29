@@ -1,18 +1,18 @@
-replicaCount: 1
-
-serviceAccount:
-  name: ""
-
 image:
-  repository: quay.io/rh-ee-mpk/simcrew
+  repository: ghcr.io/mpk-droid/simcrew
   tag: latest
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
+
+# Image for persona agent pods. Defaults to `image` above.
+agent:
+  image: ""
 
 service:
   port: 8000
 
 route:
   enabled: true
+  host: ""
   tls:
     termination: edge
 
@@ -29,41 +29,41 @@ healthCheck:
   initialDelaySeconds: 10
   periodSeconds: 30
 
-env:
-  SU_ROLE: orchestrator
-  MODEL: nvidia/nemotron-3-ultra-550b-a55b
-
-agent:
-  image:
-    repository: quay.io/rh-ee-mpk/simcrew
-    tag: latest
-  resources:
-    requests:
-      memory: 512Mi
-      cpu: 250m
-    limits:
-      memory: 2Gi
-      cpu: "2"
-  timeout: 1800
+serviceAccount:
+  create: true
+  name: ""
 
 postgresql:
   enabled: true
+  image: quay.io/sclorg/postgresql-16-c9s:latest
   auth:
     database: simcrew
     username: simcrew
-    password: simcrew
-  primary:
-    persistence:
-      size: 1Gi
+    # Empty: generated on install and kept across upgrades.
+    password: ""
+  persistence:
+    size: 1Gi
+    storageClass: ""
+
+# Used when postgresql.enabled is false, e.g.
+# postgresql+asyncpg://user:pass@host:5432/db
+externalDatabaseUrl: ""
+
+# Agent pods run code from the repos they evaluate. This keeps them off the
+# cluster network: they can reach the orchestrator, DNS, and public internet.
+networkPolicy:
+  enabled: true
+  # CIDRs agents may reach despite being private, e.g. an internal LLM endpoint.
+  extraEgressCIDRs: []
 
 secrets:
-  anthropicApiKey: ""
-  vertexProjectId: ""
-  vertexRegion: ""
-  modelsCorpApiKey: ""
-  modelsCorpUrl: ""
   nvidiaApiKey: ""
   nvidiaNimBaseUrl: "https://integrate.api.nvidia.com/v1"
   nvidiaNimModel: "nvidia/nemotron-3-ultra-550b-a55b"
   nvidiaNimFallbackModel: "nvidia/nemotron-3-super-120b-a12b"
   nvidiaNimEnableThinking: "false"
+  modelsCorpApiKey: ""
+  modelsCorpUrl: ""
+  anthropicApiKey: ""
+  vertexProjectId: ""
+  vertexRegion: ""

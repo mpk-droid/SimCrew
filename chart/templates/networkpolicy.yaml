@@ -1,0 +1,47 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "simcrew.fullname" . }}-agents
+  labels:
+    {{- include "simcrew.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: su-agent
+  policyTypes: ["Ingress", "Egress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "simcrew.selectorLabels" . | nindent 14 }}
+      ports:
+        - port: 8080
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "simcrew.selectorLabels" . | nindent 14 }}
+      ports:
+        - port: {{ .Values.service.port }}
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - { port: 53, protocol: UDP }
+        - { port: 53, protocol: TCP }
+        - { port: 5353, protocol: UDP }
+        - { port: 5353, protocol: TCP }
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 100.64.0.0/10
+              - 169.254.0.0/16
+        {{- range .Values.networkPolicy.extraEgressCIDRs }}
+        - ipBlock:
+            cidr: {{ . }}
+        {{- end }}
+{{- end }}
