@@ -39,8 +39,12 @@ async def create_journey(data: JourneyCreate, db: AsyncSession = Depends(get_db)
     journey = Journey(name=data.name, description=data.description)
     db.add(journey)
     await db.commit()
-    await db.refresh(journey)
-    return journey
+    result = await db.execute(
+        select(Journey)
+        .options(selectinload(Journey.phases))
+        .where(Journey.id == journey.id)
+    )
+    return result.scalar_one()
 
 
 @router.get("/{journey_id}", response_model=JourneyResponse)
