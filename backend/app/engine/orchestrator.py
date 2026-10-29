@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 AGENT_PORT = 8080
 AGENT_STARTUP_TIMEOUT = 120
-AGENT_RUN_TIMEOUT = 1800
+AGENT_RUN_TIMEOUT = int(os.environ.get("SU_AGENT_RUN_TIMEOUT", "1800"))
 
 _run_trackers: dict[str, dict] = {}
 _run_cancel_flags: set[str] = set()

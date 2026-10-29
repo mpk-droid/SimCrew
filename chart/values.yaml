@@ -6,6 +6,8 @@ image:
 # Image for persona agent pods. Defaults to `image` above.
 agent:
   image: ""
+  # Seconds to wait for all personas in a run to finish before failing it.
+  runTimeout: 1800
 
 service:
   port: 8000
