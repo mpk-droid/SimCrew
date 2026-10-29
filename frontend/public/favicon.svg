@@ -6,9 +6,9 @@
       <path d="M0 -1.6C-4.2 -3.6 -4.8 -8.8 0 -10.2C4.8 -8.8 4.2 -3.6 0 -1.6Z"/>
       <circle cy="-13.1" r="2.9"/>
     </g>
-    <g fill="#f97316" transform="rotate(120)">
+    <g fill="#fff" transform="rotate(120)">
       <path d="M0 -1.6C-4.2 -3.6 -4.8 -8.8 0 -10.2C4.8 -8.8 4.2 -3.6 0 -1.6Z"/>
-      <circle cy="-13.1" r="2.9"/>
+      <circle cy="-13.1" r="2.9" fill="#f97316"/>
     </g>
     <g fill="#fff" transform="rotate(240)">
       <path d="M0 -1.6C-4.2 -3.6 -4.8 -8.8 0 -10.2C4.8 -8.8 4.2 -3.6 0 -1.6Z"/>
