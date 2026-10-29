@@ -1,9 +1,34 @@
 from __future__ import annotations
 
+import os
+import re
 import uuid
 from datetime import datetime
+from urllib.parse import urlparse
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+_SCP_STYLE_URL = re.compile(r"^git@[A-Za-z0-9.-]+:[A-Za-z0-9._/~-]+$")
+_FORBIDDEN_URL_CHARS = re.compile(r"[\s;&|$`<>\\'\"(){}*?!#]")
+
+
+def validate_repo_url(url: str) -> str:
+    url = url.strip()
+    if not url or url.startswith("-") or _FORBIDDEN_URL_CHARS.search(url):
+        raise ValueError("repo_url contains characters that are not allowed")
+    if _SCP_STYLE_URL.match(url):
+        return url
+    allowed = {
+        s.strip()
+        for s in os.environ.get("SU_ALLOWED_REPO_SCHEMES", "https").split(",")
+        if s.strip()
+    }
+    parsed = urlparse(url)
+    if parsed.scheme not in allowed or not parsed.hostname:
+        raise ValueError(
+            f"repo_url must be a {' or '.join(sorted(allowed))} URL or git@host:path"
+        )
+    return url
 
 
 class PersonaEnvironmentSpec(BaseModel):
@@ -28,6 +53,11 @@ class RunCreate(BaseModel):
     journey_id: uuid.UUID
     model: str = "nvidia/nemotron-3-ultra-550b-a55b"
     config: dict = Field(default_factory=dict)
+
+    @field_validator("repo_url")
+    @classmethod
+    def _check_repo_url(cls, v: str) -> str:
+        return validate_repo_url(v)
 
 
 class RunResponse(BaseModel):
