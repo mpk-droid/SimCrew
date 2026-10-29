@@ -4,7 +4,8 @@ description: SimCrew orchestrator and persona agents
 version: 0.2.0
 appVersion: "0.1.0"
 type: application
-home: https://github.com/mpk-droid/SimCrew
+home: https://mpk-droid.github.io/SimCrew/
+icon: https://mpk-droid.github.io/SimCrew/favicon.svg
 sources:
   - https://github.com/mpk-droid/SimCrew
 maintainers:

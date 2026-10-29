@@ -6,6 +6,15 @@
 <title>SimCrew — AI synthetic developers that test your DX</title>
 <meta name="description" content="Give SimCrew a git repo URL. It spins up isolated agent containers, one per persona, each clones your repo and evaluates it like a real developer. Findings come back deduplicated, scored, and ready to act on.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mpk-droid.github.io/SimCrew/">
+<meta property="og:title" content="SimCrew">
+<meta property="og:description" content="AI synthetic developers that test your developer experience. Open source, Apache 2.0.">
+<meta property="og:image" content="https://mpk-droid.github.io/SimCrew/og.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
 <style>
   :root {
     --color-white: #ffffff;
@@ -76,7 +85,7 @@
     font-size: 18px;
     color: var(--color-gray-900);
   }
-  .brand img { width: 26px; height: 25px; }
+  .brand img { width: 30px; height: 30px; }
   .nav-links {
     display: flex;
     align-items: center;
@@ -84,8 +93,8 @@
     font-size: 14px;
     font-weight: 500;
   }
-  .nav-links a { color: var(--color-gray-700); }
-  .nav-links a:hover { color: var(--color-gray-900); text-decoration: none; }
+  .nav-links a:not(.btn) { color: var(--color-gray-700); }
+  .nav-links a:not(.btn):hover { color: var(--color-gray-900); text-decoration: none; }
   .btn {
     display: inline-flex;
     align-items: center;
@@ -398,10 +407,10 @@
     </div>
     <div class="code-box" id="quick-start">
       <button class="copy-btn" onclick="copyCmd()" id="copyBtn">Copy</button>
-      <pre id="cmd"><span class="comment"># clone and run</span>
-git clone git@github.com:mpk-droid/SimCrew.git &amp;&amp; cd SimCrew
-export NVIDIA_API_KEY=nvapi-...  <span class="comment"># or ANTHROPIC_API_KEY</span>
-docker compose up</pre>
+      <pre id="cmd"><span class="comment"># clone and run, then open http://localhost:8000</span>
+git clone https://github.com/mpk-droid/SimCrew.git &amp;&amp; cd SimCrew
+echo "NVIDIA_API_KEY=nvapi-..." &gt; .env  <span class="comment"># free key: build.nvidia.com</span>
+docker compose up --build</pre>
     </div>
   </div>
 </section>
@@ -535,7 +544,7 @@ docker compose up</pre>
 <footer>
   <div class="wrap">
     <div class="foot-top">
-      <div class="brand">SimCrew</div>
+      <div class="brand"><img src="favicon.svg" alt=""> SimCrew</div>
       <div class="foot-links">
         <a href="https://github.com/mpk-droid/SimCrew">GitHub</a>
         <a href="https://github.com/mpk-droid/SimCrew#readme">Docs</a>
@@ -553,7 +562,7 @@ docker compose up</pre>
 
 <script>
 function copyCmd() {
-  var text = "git clone git@github.com:mpk-droid/SimCrew.git && cd SimCrew\nexport NVIDIA_API_KEY=nvapi-...\ndocker compose up";
+  var text = "git clone https://github.com/mpk-droid/SimCrew.git && cd SimCrew\necho \"NVIDIA_API_KEY=nvapi-...\" > .env\ndocker compose up --build";
   navigator.clipboard.writeText(text).then(function () {
     var btn = document.getElementById('copyBtn');
     var original = btn.textContent;
