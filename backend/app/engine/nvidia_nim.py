@@ -150,6 +150,11 @@ def _resolve_model(model: str, default_model: str) -> str:
     return model
 
 
+def _is_transient(status_code: int) -> bool:
+    # The hosted NIM API intermittently answers 404 for models it does serve.
+    return status_code == 404 or status_code >= 500
+
+
 def _models_to_try(primary: str, fallback: str | None) -> list[str]:
     models = [primary]
     if fallback and fallback != primary:
@@ -230,13 +235,11 @@ class NvidiaNimMessages:
                     return _openai_response_to_anthropic(response.json())
                 except httpx.HTTPStatusError as exc:
                     last_error = exc
-                    if response.status_code >= 500 and attempt < MAX_RETRIES - 1:
+                    transient = _is_transient(response.status_code)
+                    if transient and attempt < MAX_RETRIES - 1:
                         await asyncio.sleep(2**attempt)
                         continue
-                    if (
-                        response.status_code >= 500
-                        and model_index < len(models) - 1
-                    ):
+                    if transient and model_index < len(models) - 1:
                         logger.warning(
                             "NVIDIA NIM model %s failed with HTTP %s after %s "
                             "retries; falling back to %s",
