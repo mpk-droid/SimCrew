@@ -1,3 +1,5 @@
+<img src="website/favicon.svg" alt="SimCrew logo" width="80">
+
 # SimCrew
 
 **[Website](https://mpk-droid.github.io/SimCrew/)**
