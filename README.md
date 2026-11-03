@@ -4,13 +4,13 @@
 
 **[Website](https://mpk-droid.github.io/SimCrew/)**
 
-AI synthetic developers that test the developer experience of your software. Give it a git repo URL — it spins up isolated agent containers (one per persona), each clones the repo and evaluates it like a real developer. Findings are deduplicated, scored GREEN/YELLOW/RED, and viewable in the built-in UI.
+AI synthetic developers that test the developer experience of your software. Give it a git repo URL — it spins up isolated agent containers (one per persona), each clones the repo and evaluates it like a real developer. Findings are deduplicated, scored GREEN/YELLOW/RED, and viewable in the built-in UI. Pick any model your provider serves for each run, and give each persona its own machine image when you want to test on, say, Fedora with Go.
 
 ## How It Works
 
 1. **Define personas** — each with an identity, perspective, and constraints (e.g., "backend developer who has never used AI" or "platform engineer evaluating for OpenShift deployment")
 2. **Define a journey** — ordered phases like "Read the docs", "Set up locally", "Test the API", "Try deploying"
-3. **Point at a repo** — provide a git repository URL
+3. **Point at a repo** — provide a git repository URL, and optionally pick the model and a machine image ([environment](#custom-environments)) for each persona
 4. **Get a report** — each persona independently clones the repo, follows the journey phases, and reports findings with evidence. All tools (file reading, command execution, HTTP requests) are always available.
 
 Findings are scored GREEN / YELLOW / RED and stored in a database. A built-in UI shows run history, findings, and reports.
