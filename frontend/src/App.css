@@ -402,23 +402,6 @@ h1, h2, h3, h4 {
 }
 
 
-.wip-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 14px;
-  margin-bottom: 16px;
-  border: 1px solid #fde68a;
-  border-radius: var(--border-radius);
-  background: #fffbeb;
-}
-
-.wip-banner p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--color-gray-700);
-}
-
 .badge--wip {
   background: #fef3c7;
   color: #92400e;
@@ -451,18 +434,6 @@ h1, h2, h3, h4 {
   flex-shrink: 0;
 }
 
-.nav-link__wip {
-  margin-left: auto;
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #92400e;
-  background: #fef3c7;
-  border: 1px solid #fcd34d;
-}
 
 .badge--outline {
   background: transparent;

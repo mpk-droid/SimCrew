@@ -12,12 +12,11 @@ const mainNavItems: {
   to: string;
   label: string;
   icon: typeof IconDashboard;
-  wip?: boolean;
 }[] = [
   { to: '/', label: 'Dashboard', icon: IconDashboard },
   { to: '/personas', label: 'Personas', icon: IconPersonas },
   { to: '/journeys', label: 'Journeys', icon: IconJourneys },
-  { to: '/environments', label: 'Environments', icon: IconEnvironments, wip: true },
+  { to: '/environments', label: 'Environments', icon: IconEnvironments },
 ];
 
 const resourceNavItems = [
@@ -49,7 +48,6 @@ export default function Layout() {
               >
                 <Icon className="nav-link__icon" />
                 <span>{item.label}</span>
-                {item.wip && <span className="nav-link__wip">WIP</span>}
               </NavLink>
             );
           })}

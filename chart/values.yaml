@@ -53,6 +53,12 @@ externalDatabaseUrl: ""
 
 # Agent pods run code from the repos they evaluate. This keeps them off the
 # cluster network: they can reach the orchestrator, DNS, and public internet.
+# Custom environments run user-chosen images as persona agents. On a shared
+# instance, restrict them to registries you trust, e.g. ["ghcr.io/mpk-droid/"].
+# Empty allows any image.
+environments:
+  allowedImagePrefixes: []
+
 networkPolicy:
   enabled: true
   # CIDRs agents may reach despite being private, e.g. an internal LLM endpoint.

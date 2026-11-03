@@ -46,6 +46,23 @@ fill gaps.\
 """
 
 
+_ENV_HEADING = "## Your Environment\n"
+
+
+def _environment_line(description: str) -> str:
+    return f"Your machine: {description.strip().rstrip('.')}. "
+
+
+def with_environment(system_prompt: str, description: str | None) -> str:
+    """Add the run's environment to an approved persona prompt."""
+    if not description or not description.strip():
+        return system_prompt
+    line = _environment_line(description)
+    if _ENV_HEADING in system_prompt:
+        return system_prompt.replace(_ENV_HEADING, _ENV_HEADING + line, 1)
+    return f"{system_prompt}\n\n{_ENV_HEADING}{line.strip()}"
+
+
 def generate_system_prompt(
     name: str,
     identity: str,
@@ -56,7 +73,7 @@ def generate_system_prompt(
     """Generate a system prompt from structured persona fields."""
     env_section = ""
     if environment_description:
-        env_section = f"You are working on a {environment_description} machine. "
+        env_section = _environment_line(environment_description)
     return _TEMPLATE.format(
         name=name,
         identity=identity,

@@ -192,9 +192,7 @@ And a 5-phase journey: First Impressions → Setup → Running Locally → Using
 
 ## Custom Environments
 
-> **Work in progress** — environment CRUD and per-persona assignment are disabled in the UI and API. Runs use the default agent image. The notes below describe the planned workflow.
-
-Agents run inside container images. **Default** uses the built-in SimCrew agent image. To simulate a different OS or toolchain, publish a variant of the base image and register it as an Environment.
+Each persona's agent runs inside a container image. **Default** is the standard SimCrew agent image. To simulate a different machine (another OS, a Go or Java toolchain, missing tools), publish a variant of the base image, register it as an Environment, and pick it per persona on a run.
 
 **Base image:**
 
@@ -226,18 +224,29 @@ USER 1001
 
 ### 2. Register in the UI
 
-1. Open **Environments** → **Add Environment**
-2. **Name** — e.g. `Fedora + Go`
-3. **Docker Image** — your pushed image (e.g. `quay.io/<you>/simcrew-fedora:latest`)
-4. **Description** — optional; shown in the persona prompt (e.g. `Fedora 40 with Go installed`)
+1. Open **Environments** → **New Environment**
+2. **Name**, e.g. `Fedora + Go`
+3. **Container image**: your pushed image, e.g. `quay.io/<you>/simcrew-fedora:latest`
+4. **Description** (optional): added to the persona's prompt as "Your machine: …", e.g. `Fedora 40 with Go installed`
+
+Or via the API: `POST /api/environments` with `{"name": ..., "image": ..., "description": ...}`.
 
 ### 3. Use on a run
 
 On **New Run**, select personas and pick an environment per persona. Leave **Default** to use the base agent image.
 
+If an environment's agent never becomes healthy, the run fails with a message naming the persona and image. Usually the image isn't built `FROM` the base image, or it overrides the entrypoint.
+
 ### Registry access
 
-The cluster or Docker host running agents must be able to **pull** the image. Public Quay repos work out of the box. Private repos need registry credentials (`docker login quay.io` locally, or an OpenShift `imagePullSecret`).
+The Docker host or cluster running agents must be able to **pull** the image. Public images work out of the box. For private images:
+
+- **Locally:** run `docker pull <image>` on your machine first. SimCrew's own container doesn't have your registry login, but it uses images already present on the host.
+- **On a cluster:** agent pods use the namespace's `default` service account, so link a pull secret to it: `oc create secret docker-registry my-pull --docker-server=quay.io --docker-username=... --docker-password=...` then `oc secrets link default my-pull --for=pull`.
+
+### Restricting images on shared instances
+
+Environments run whatever image they point to. On an instance other people can reach, limit them to registries you trust with `SU_ALLOWED_ENV_IMAGE_PREFIXES` (comma-separated, e.g. `ghcr.io/mpk-droid/,quay.io/my-team/`), or the Helm value `environments.allowedImagePrefixes`. Empty (the default) allows any image. The check applies when environments are created or edited and again when a run starts.
 
 ## Environment Variables
 
@@ -251,6 +260,7 @@ The cluster or Docker host running agents must be able to **pull** the image. Pu
 | `SU_ROLE` | No | `orchestrator` (default) or `agent` |
 | `SU_AGENT_IMAGE` | No | Image for agent containers (default `simcrew:latest`) |
 | `SU_DOCKER_NETWORK` | No | Docker network for agent containers (default `simcrew`) |
+| `SU_ALLOWED_ENV_IMAGE_PREFIXES` | No | Comma-separated image prefixes environments may use (default: any image) |
 | `SU_AGENT_RUN_TIMEOUT` | No | Seconds to wait for all personas in a run before failing it (default `1800`; raise it for long journeys or rate-limited keys) |
 | `SU_ALLOWED_REPO_SCHEMES` | No | Comma-separated URL schemes accepted for `repo_url` (default `https`; `git@host:path` is always accepted) |
 

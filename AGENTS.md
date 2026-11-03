@@ -109,6 +109,7 @@ Open dev UI at http://localhost:5174 — not :5173.
 | `SU_ROLE` | No | `orchestrator` (default) or `agent` |
 | `SU_AGENT_IMAGE` | No | Docker image for agent containers (default: `synthetic-users:latest`) |
 | `SU_DOCKER_NETWORK` | No | Docker network for agent containers |
+| `SU_ALLOWED_ENV_IMAGE_PREFIXES` | No | Comma-separated image prefixes environments may use (default: any image) |
 | `SU_AGENT_RUN_TIMEOUT` | No | Seconds to wait for all personas in a run before failing it (default `1800`) |
 
 Copy `.env.example` to `.env` for local shell exports. Docker Compose reads `ANTHROPIC_API_KEY` and `ANTHROPIC_VERTEX_PROJECT_ID` from your environment.
@@ -129,11 +130,9 @@ Seeded from `backend/app/seed/test_pack.py` on orchestrator startup.
 
 ## Custom agent environments
 
-**Work in progress** — do not enable environment CRUD or per-persona assignment in product flows until this ships. `POST`/`PUT`/`DELETE` `/api/environments` return `503`; runs reject non-null `environment_id`.
+Base image: `ghcr.io/mpk-droid/simcrew:latest`. Custom environments must `FROM` it and keep its entrypoint (see `examples/environment/Dockerfile`). Users register variants in **Environments** (`/api/environments`), then assign one per persona on **New Run** (`persona_environments[].environment_id`). The orchestrator starts that persona's agent with `environment.image`, and the runner adds `environment.description` to the persona's system prompt (`with_environment` in `engine/prompt_generator.py`).
 
-Published base image: `quay.io/rh-ee-mpk/synthetic-users:latest`
-
-Custom environments must `FROM` this image (see `examples/environment/Dockerfile`). Users register variants in **Environments**, then assign per persona on **New Run**. The orchestrator pulls `environment.image` when starting each agent container.
+`SU_ALLOWED_ENV_IMAGE_PREFIXES` restricts which images environments may use; it is checked on create/update and again at run creation. Keep it set on shared instances.
 
 ## Boundaries
 

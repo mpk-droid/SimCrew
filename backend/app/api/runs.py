@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.attributes import flag_modified
 
-from app.api.environments import ENVIRONMENTS_WIP_DETAIL
 from app.db.session import async_session, get_db
 from app.engine.runner import (
     MISSING_CREDENTIALS_DETAIL,
@@ -34,6 +33,7 @@ from app.models.run import (
     RunPersonaStatus,
     RunStatus,
 )
+from app.schemas.environment import image_policy_error
 from app.schemas.finding import FindingResponse
 from app.schemas.run import (
     AgentDonePayload,
@@ -455,8 +455,6 @@ async def create_run(
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
-    if any(pe.environment_id for pe in data.persona_environments):
-        raise HTTPException(400, ENVIRONMENTS_WIP_DETAIL)
     if not has_llm_credentials(data.config):
         raise HTTPException(400, MISSING_CREDENTIALS_DETAIL)
 
@@ -482,10 +480,13 @@ async def create_run(
             env_result = await db.execute(
                 select(Environment).where(Environment.id.in_(env_ids))
             )
-            found = {env.id for env in env_result.scalars().all()}
-            missing = env_ids - found
+            envs = env_result.scalars().all()
+            missing = env_ids - {env.id for env in envs}
             if missing:
                 raise HTTPException(400, f"Unknown environment id(s): {missing}")
+            for env in envs:
+                if error := image_policy_error(env.image):
+                    raise HTTPException(400, f"Environment {env.name}: {error}")
 
     for pe_spec in data.persona_environments:
         rp = RunPersona(
