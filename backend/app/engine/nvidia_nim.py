@@ -188,13 +188,13 @@ class NvidiaNimMessages:
             "temperature": 1.0,
             "top_p": 0.95,
         }
+        # Thinking models otherwise spend the max_tokens budget reasoning,
+        # which cut off JSON answers (e.g. dedup) before they closed.
+        body["chat_template_kwargs"] = {"enable_thinking": self.enable_thinking}
         if openai_tools:
             body["tools"] = openai_tools
             body["tool_choice"] = "auto"
-            body["chat_template_kwargs"] = {
-                "enable_thinking": self.enable_thinking,
-                "force_nonempty_content": True,
-            }
+            body["chat_template_kwargs"]["force_nonempty_content"] = True
 
         url = f"{self.base_url.rstrip('/')}/chat/completions"
         headers = {
