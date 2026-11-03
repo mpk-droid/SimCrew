@@ -298,14 +298,6 @@
     gap: 8px;
   }
   .feature p { font-size: 14px; color: var(--color-gray-600); }
-  .badge-wip {
-    font-size: 11px;
-    font-weight: 700;
-    color: #92400e;
-    background: #fef3c7;
-    border-radius: 999px;
-    padding: 2px 8px;
-  }
 
   @media (max-width: 900px) {
     .features { grid-template-columns: repeat(2, 1fr); }
@@ -502,8 +494,8 @@ docker compose up --build</pre>
         <p>Run evaluations from the included UI or drive everything through the REST API &mdash; full OpenAPI docs included.</p>
       </div>
       <div class="feature">
-        <h3>Custom environments <span class="badge-wip">WIP</span></h3>
-        <p>Extend the base agent image to simulate a different OS or toolchain per persona. In active development.</p>
+        <h3>Custom environments</h3>
+        <p>Run each persona on its own machine image, such as Fedora with Go or a box missing a tool, by extending the base agent image.</p>
       </div>
     </div>
   </div>

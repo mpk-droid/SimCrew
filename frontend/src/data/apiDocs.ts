@@ -17,7 +17,6 @@ export interface ApiSection {
   title: string;
   description: string;
   basePath?: string;
-  workInProgress?: boolean;
   endpoints: ApiEndpoint[];
 }
 
@@ -185,9 +184,8 @@ export const apiSections: ApiSection[] = [
     id: 'environments',
     title: 'Environments',
     description:
-      'Work in progress. List and read endpoints work today. Create, update, and delete return 503. Runs cannot assign a non-default environment yet.',
+      'Container images persona agents run in. Images must be built FROM the SimCrew agent image. If SU_ALLOWED_ENV_IMAGE_PREFIXES is set, only images under those prefixes are accepted.',
     basePath: '/api/environments',
-    workInProgress: true,
     endpoints: [
       {
         method: 'GET',
@@ -199,10 +197,10 @@ export const apiSections: ApiSection[] = [
       {
         method: 'POST',
         path: '/api/environments',
-        summary: 'Create environment (disabled — work in progress)',
+        summary: 'Create environment',
         requestBody: '{ "name": "string (required)", "image": "string (required)", "description": "string | null" }',
-        responseBody: 'Error detail',
-        statusCodes: '503 — work in progress',
+        responseBody: 'EnvironmentResponse',
+        statusCodes: '201 · 422 (invalid or disallowed image)',
       },
       {
         method: 'GET',
@@ -214,16 +212,16 @@ export const apiSections: ApiSection[] = [
       {
         method: 'PUT',
         path: '/api/environments/{env_id}',
-        summary: 'Update environment (disabled — work in progress)',
+        summary: 'Update environment',
         requestBody: 'Partial EnvironmentUpdate',
-        responseBody: 'Error detail',
-        statusCodes: '503 — work in progress',
+        responseBody: 'EnvironmentResponse',
+        statusCodes: '200 · 403 (built-in) · 404 · 422',
       },
       {
         method: 'DELETE',
         path: '/api/environments/{env_id}',
-        summary: 'Delete environment (disabled — work in progress)',
-        statusCodes: '503 — work in progress',
+        summary: 'Delete environment',
+        statusCodes: '204 · 403 (built-in) · 404 · 409 (used by runs)',
       },
     ],
   },

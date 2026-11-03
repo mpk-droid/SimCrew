@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { apiSections, type ApiEndpoint, type HttpMethod } from '../data/apiDocs';
 import { PublicRepoDisclaimerBanner } from '../components/PublicRepoDisclaimerBanner';
-import { WorkInProgressBanner } from '../components/WorkInProgressBanner';
 
 const methodClass: Record<HttpMethod, string> = {
   GET: 'api-method--get',
@@ -109,9 +108,6 @@ export default function ApiDocs() {
           <section>
             <h3>{section.title}</h3>
             <p className="docs-section-desc">{section.description}</p>
-            {section.workInProgress && (
-              <WorkInProgressBanner />
-            )}
             {section.basePath && (
               <p className="docs-base-path">
                 Base path: <code>{section.basePath}</code>

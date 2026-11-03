@@ -42,6 +42,7 @@ services:
       SU_DOCKER_NETWORK: simcrew
       SU_ORCHESTRATOR_HOST: app
       SU_AGENT_RUN_TIMEOUT: ${SU_AGENT_RUN_TIMEOUT:-1800}
+      SU_ALLOWED_ENV_IMAGE_PREFIXES: ${SU_ALLOWED_ENV_IMAGE_PREFIXES:-}
     depends_on:
       db:
         condition: service_healthy

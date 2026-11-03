@@ -49,8 +49,8 @@ export default function About() {
         <h3>How a run works</h3>
         <ol className="about-steps">
           <li>
-            <strong>Configure</strong> — Create or select personas and a journey. Per-persona
-            environments are planned but not available yet (work in progress).
+            <strong>Configure</strong> — Create or select personas and a journey, and
+            optionally an environment (the machine image) per persona.
           </li>
           <li>
             <strong>Start a run</strong> — Provide a repository URL, choose personas, and start orchestration.
@@ -97,9 +97,9 @@ export default function About() {
           <div>
             <dt>Environment</dt>
             <dd>
-              <span className="badge badge--wip">Work in progress</span>
-              Planned: per-persona container images (e.g. Mac-like vs Linux-like developer
-              laptops). Not available in the UI yet — runs use the default agent image.
+              The container image a persona's agent runs in, for example a machine with Go or
+              Java installed. Built from the SimCrew agent image and chosen per persona on New
+              Run; personas without one use the default image.
             </dd>
           </div>
           <div>

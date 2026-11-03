@@ -115,7 +115,7 @@ class AgentOrchestrator(abc.ABC):
             if is_run_cancelled(run_id):
                 raise RunCancelledError(f"Run {run_id} cancelled")
 
-            await self._wait_for_healthy(agent_hosts)
+            await self._wait_for_healthy(agent_hosts, personas)
 
             orchestrator_url = self._build_orchestrator_url(run_id)
 
@@ -184,10 +184,13 @@ class AgentOrchestrator(abc.ABC):
         return None
 
     async def _wait_for_healthy(
-        self, hosts: list[str], timeout: int = AGENT_STARTUP_TIMEOUT
+        self,
+        hosts: list[str],
+        personas: list[dict],
+        timeout: int = AGENT_STARTUP_TIMEOUT,
     ) -> None:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            for host in hosts:
+            for host, persona in zip(hosts, personas):
                 url = f"http://{host}:{AGENT_PORT}/health"
                 for _ in range(timeout):
                     try:
@@ -199,9 +202,7 @@ class AgentOrchestrator(abc.ABC):
                         pass
                     await asyncio.sleep(1)
                 else:
-                    raise RuntimeError(
-                        f"Agent {host} did not become healthy within {timeout}s"
-                    )
+                    raise RuntimeError(_unhealthy_message(persona, timeout))
 
     async def _dispatch_run(
         self,
@@ -335,6 +336,17 @@ class DockerOrchestrator(AgentOrchestrator):
         if self._docker_client:
             self._docker_client.close()
         self._containers.clear()
+
+
+def _unhealthy_message(persona: dict, timeout: int) -> str:
+    message = f"Agent for {persona['name']} did not become healthy within {timeout}s."
+    if image := persona.get("environment_image"):
+        message += (
+            f" Its environment image {image} must be built FROM the SimCrew agent "
+            "image (ghcr.io/mpk-droid/simcrew) and keep its entrypoint, and the "
+            "host must be able to pull it."
+        )
+    return message
 
 
 # ── Kubernetes backend ───────────────────────────────────────────────

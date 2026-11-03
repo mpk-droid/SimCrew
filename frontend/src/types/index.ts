@@ -80,8 +80,10 @@ export interface EnvironmentResponse {
 export interface EnvironmentCreate {
   name: string;
   image: string;
-  description?: string;
+  description?: string | null;
 }
+
+export type EnvironmentUpdate = Partial<EnvironmentCreate>;
 
 export interface PersonaEnvironmentSpec {
   persona_id: string;

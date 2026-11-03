@@ -4,6 +4,7 @@ import type {
   PersonaUpdate,
   EnvironmentResponse,
   EnvironmentCreate,
+  EnvironmentUpdate,
   JourneyResponse,
   JourneyCreate,
   JourneyUpdate,
@@ -19,7 +20,9 @@ function errorDetail(text: string): string | null {
   try {
     const { detail } = JSON.parse(text);
     if (typeof detail === 'string') return detail;
-    if (Array.isArray(detail)) return detail.map((d) => d.msg).join('; ');
+    if (Array.isArray(detail)) {
+      return detail.map((d) => String(d.msg).replace(/^Value error, /, '')).join('; ');
+    }
   } catch {
     // not JSON
   }
@@ -168,6 +171,16 @@ export function getEnvironments(): Promise<EnvironmentResponse[]> {
 export function createEnvironment(data: EnvironmentCreate): Promise<EnvironmentResponse> {
   return request('/api/environments', {
     method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateEnvironment(
+  id: string,
+  data: EnvironmentUpdate,
+): Promise<EnvironmentResponse> {
+  return request(`/api/environments/${id}`, {
+    method: 'PUT',
     body: JSON.stringify(data),
   });
 }

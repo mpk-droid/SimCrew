@@ -54,7 +54,7 @@ app.include_router(journeys.router, prefix="/api/journeys", tags=["journeys"])
 app.include_router(runs.router, prefix="/api/runs", tags=["runs"])
 app.include_router(prompts.router, prefix="/api/prompts", tags=["prompts"])
 app.include_router(
-    environments.router, prefix="/api/environments", tags=["environments (work in progress)"]
+    environments.router, prefix="/api/environments", tags=["environments"]
 )
 
 
