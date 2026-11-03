@@ -15,6 +15,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from app.db.session import async_session, get_db
 from app.engine.runner import (
     MISSING_CREDENTIALS_DETAIL,
+    default_model,
     execute_orchestrated_run,
     has_llm_credentials,
 )
@@ -465,7 +466,7 @@ async def create_run(
             pe.model_dump(mode="json") for pe in data.persona_environments
         ],
         journey_id=data.journey_id,
-        model=data.model,
+        model=data.model or default_model(data.config),
         config=data.config,
         status=RunStatus.pending,
     )

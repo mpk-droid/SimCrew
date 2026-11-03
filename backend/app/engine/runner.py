@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 from datetime import datetime, timezone
 
 import anthropic
+import httpx
 
 from app.engine.prompt_generator import with_environment
 from app.engine.supervisor import score_run
@@ -38,6 +40,56 @@ def has_llm_credentials(config: dict) -> bool:
         (key and config.get(key)) or os.environ.get(env)
         for key, env in _CREDENTIAL_SOURCES
     )
+
+
+DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-5-5"
+_MODEL_LIST_TTL = 300.0
+_model_list_cache: dict[str, tuple[float, list[str]]] = {}
+
+
+def _nim_settings(config: dict) -> tuple[str | None, str, str]:
+    from app.engine.nvidia_nim import DEFAULT_BASE_URL, DEFAULT_MODEL
+
+    key = config.get("nvidia_api_key") or os.environ.get("NVIDIA_API_KEY")
+    base_url = config.get("nvidia_nim_base_url") or os.environ.get(
+        "NVIDIA_NIM_BASE_URL", DEFAULT_BASE_URL
+    )
+    model = config.get("nvidia_nim_model") or os.environ.get(
+        "NVIDIA_NIM_MODEL", DEFAULT_MODEL
+    )
+    return key, base_url, model
+
+
+def default_model(config: dict) -> str:
+    """The model a run uses when it doesn't name one, for the active provider."""
+    key, _, nim_model = _nim_settings(config)
+    if key:
+        return nim_model
+    return os.environ.get("ANTHROPIC_MODEL", DEFAULT_ANTHROPIC_MODEL)
+
+
+async def list_models(config: dict) -> list[str]:
+    """Models the configured OpenAI-compatible provider serves; [] if unknown."""
+    key, base_url, _ = _nim_settings(config)
+    if not key:
+        return []
+    cached = _model_list_cache.get(base_url)
+    now = time.monotonic()
+    if cached and now - cached[0] < _MODEL_LIST_TTL:
+        return cached[1]
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                f"{base_url.rstrip('/')}/models",
+                headers={"Authorization": f"Bearer {key}"},
+            )
+            resp.raise_for_status()
+            models = sorted({m["id"] for m in resp.json().get("data", []) if "id" in m})
+    except (httpx.HTTPError, ValueError, KeyError, TypeError):
+        logger.warning("Could not list models from %s", base_url, exc_info=True)
+        return []
+    _model_list_cache[base_url] = (now, models)
+    return models
 
 
 def _build_client(config: dict):

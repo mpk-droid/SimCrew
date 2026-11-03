@@ -103,7 +103,8 @@ Open dev UI at http://localhost:5174 — not :5173.
 | `ANTHROPIC_API_KEY` | | Direct Anthropic API key (if not using Vertex) |
 | `NVIDIA_API_KEY` | One of these | NVIDIA NIM API key ([build.nvidia.com](https://build.nvidia.com/settings)) |
 | `NVIDIA_NIM_BASE_URL` | No | Default `https://integrate.api.nvidia.com/v1` |
-| `NVIDIA_NIM_MODEL` | No | Default `nvidia/nemotron-3-ultra-550b-a55b` |
+| `NVIDIA_NIM_MODEL` | No | Default model for runs that don't name one (default `nvidia/nemotron-3-ultra-550b-a55b`) |
+| `ANTHROPIC_MODEL` | No | Default model when only Anthropic or Vertex is configured (default `claude-sonnet-5-5`) |
 | `NVIDIA_NIM_FALLBACK_MODEL` | No | None by default. A second model your key can access, used after the primary's 5xx retries |
 | `NVIDIA_NIM_ENABLE_THINKING` | No | Default `false` (reasoning mode can 500 on Ultra) |
 | `SU_ROLE` | No | `orchestrator` (default) or `agent` |

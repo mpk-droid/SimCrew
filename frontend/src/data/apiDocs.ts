@@ -226,6 +226,23 @@ export const apiSections: ApiSection[] = [
     ],
   },
   {
+    id: 'models',
+    title: 'Models',
+    description:
+      'The model a run uses when it does not name one, and the models the configured provider lists. Runs may name any model the provider serves.',
+    basePath: '/api/models',
+    endpoints: [
+      {
+        method: 'GET',
+        path: '/api/models',
+        summary: 'Default and available models',
+        responseBody: '{ "default": "string", "available": ["string"] }',
+        statusCodes: '200',
+        notes: 'available is empty when the provider cannot list models (for example Anthropic or Vertex).',
+      },
+    ],
+  },
+  {
     id: 'runs',
     title: 'Runs',
     description:
@@ -252,7 +269,7 @@ export const apiSections: ApiSection[] = [
   "persona_environments": [
     { "persona_id": "uuid", "environment_id": "uuid | null" }
   ],
-  "model": "string (default: nvidia/nemotron-3-ultra-550b-a55b)",
+  "model": "string (optional; omit for the server default, see GET /api/models)",
   "config": "object (optional) — LLM provider overrides, timeouts, etc."
 }`,
         responseBody: 'RunResponse',

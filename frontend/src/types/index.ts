@@ -95,8 +95,14 @@ export interface RunCreate {
   repo_url: string;
   persona_environments: PersonaEnvironmentSpec[];
   journey_id: string;
-  model: string;
+  /** Omit to use the server's default model. */
+  model?: string;
   config?: object;
+}
+
+export interface ModelsResponse {
+  default: string;
+  available: string[];
 }
 
 export interface FindingResponse {
