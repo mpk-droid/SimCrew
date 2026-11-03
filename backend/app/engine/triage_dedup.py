@@ -183,26 +183,31 @@ def _merge_cluster_list(clusters: list[FindingCluster]) -> FindingCluster:
     return merged
 
 
-def _parse_llm_merge_response(text: str, group: list[FindingCluster]) -> list[list[str]]:
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if not match:
-        raise ValueError("No JSON object in LLM response")
-    payload = json.loads(match.group())
-    raw_groups = payload.get("groups", [])
-    if not isinstance(raw_groups, list):
-        raise ValueError("Invalid groups payload")
+def _load_groups_json(text: str) -> list:
+    """Find {"groups": [...]} (or a bare [[...]]) in a model reply."""
+    text = re.sub(r"```(?:json)?", "", text)
+    decoder = json.JSONDecoder()
+    for index, char in enumerate(text):
+        if char not in "{[":
+            continue
+        try:
+            payload, _ = decoder.raw_decode(text, index)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict) and isinstance(payload.get("groups"), list):
+            return payload["groups"]
+        if isinstance(payload, list) and all(isinstance(g, list) for g in payload):
+            return payload
+    raise ValueError(f"No groups JSON in LLM response: {text[:200]!r}")
 
-    id_to_cluster = {
-        cluster.source_ids[0]: cluster
-        for cluster in group
-        if cluster.source_ids
-    }
-    valid_ids = set(id_to_cluster)
+
+def _parse_llm_merge_response(text: str, aliases: dict[str, str]) -> list[list[str]]:
+    """Return groups of source ids; `aliases` maps prompt ids to source ids."""
     parsed: list[list[str]] = []
-    for entry in raw_groups:
+    for entry in _load_groups_json(text):
         if not isinstance(entry, list):
             continue
-        ids = [str(item) for item in entry if str(item) in valid_ids]
+        ids = list(dict.fromkeys(aliases[a] for a in map(str, entry) if a in aliases))
         if len(ids) >= 2:
             parsed.append(ids)
     return parsed
@@ -219,13 +224,22 @@ async def llm_merge_candidate_groups(
 
     merged: list[FindingCluster] = []
     for group in groups:
+        # Short ids keep the JSON answer small; real ids are UUIDs.
+        aliases = {
+            f"f{n}": cluster.source_ids[0]
+            for n, cluster in enumerate(group, 1)
+            if cluster.source_ids
+        }
+        alias_of = {source: alias for alias, source in aliases.items()}
         lines = []
         for cluster in group:
+            if not cluster.source_ids:
+                continue
             finding = cluster.finding
             lines.append(
                 "\n".join(
                     [
-                        f"- id: {cluster.source_ids[0]}",
+                        f"- id: {alias_of[cluster.source_ids[0]]}",
                         f"  title: {finding.get('title', '')}",
                         f"  description: {finding.get('description', '')}",
                         f"  file_path: {finding.get('file_path') or '(none)'}",
@@ -238,7 +252,7 @@ async def llm_merge_candidate_groups(
             "You deduplicate developer-experience findings.\n"
             "Findings in this group may or may not describe the same underlying issue.\n"
             "Return JSON only:\n"
-            '{"groups": [["id1", "id2"], ["id3"]]}\n'
+            '{"groups": [["f1", "f2"], ["f3"]]}\n'
             "Rules:\n"
             "- Put IDs together only when they clearly describe the same issue.\n"
             "- Do not merge related but distinct issues.\n"
@@ -250,7 +264,7 @@ async def llm_merge_candidate_groups(
         try:
             response = await client.messages.create(
                 model=model,
-                max_tokens=1024,
+                max_tokens=2048,
                 system=(
                     "You are a precise deduplication assistant. "
                     "Respond with valid JSON only."
@@ -262,7 +276,7 @@ async def llm_merge_candidate_groups(
                 for block in response.content
                 if hasattr(block, "text") and block.text
             ]
-            merge_groups = _parse_llm_merge_response("\n".join(text_parts), group)
+            merge_groups = _parse_llm_merge_response("\n".join(text_parts), aliases)
         except Exception:
             logger.warning("LLM dedup failed for category group", exc_info=True)
             merged.extend(group)
