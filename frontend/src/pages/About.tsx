@@ -53,7 +53,8 @@ export default function About() {
             optionally an environment (the machine image) per persona.
           </li>
           <li>
-            <strong>Start a run</strong> — Provide a repository URL, choose personas, and start orchestration.
+            <strong>Start a run</strong> — Provide a repository URL, choose personas, optionally pick a
+            model (blank uses this server's default), and start orchestration.
           </li>
           <li>
             <strong>Agents execute</strong> — Each persona runs in its own container: clone repo →
@@ -90,8 +91,9 @@ export default function About() {
           <div>
             <dt>Run</dt>
             <dd>
-              A run is an evaluation against a repository: chosen personas, journey, repo URL,
-              and model. Starting a run launches one agent container per persona.
+              A run is an evaluation against a repository: chosen personas (each with an optional
+              environment), journey, repo URL, and model. Starting a run launches one agent
+              container per persona.
             </dd>
           </div>
           <div>

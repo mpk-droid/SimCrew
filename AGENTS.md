@@ -10,8 +10,8 @@ SimCrew/
 │   ├── app/
 │   │   ├── main.py              # Orchestrator app entry, lifespan, static file serving
 │   │   ├── agent_server.py      # Agent container app (receives run requests, clones repos)
-│   │   ├── api/                 # Route handlers (personas, journeys, runs, prompts)
-│   │   ├── models/              # SQLAlchemy models (persona, journey, run, finding)
+│   │   ├── api/                 # Route handlers (personas, journeys, runs, environments, models, prompts)
+│   │   ├── models/              # SQLAlchemy models (persona, journey, environment, run, finding)
 │   │   ├── schemas/             # Pydantic request/response schemas
 │   │   ├── engine/              # LLM agent loop, tools, orchestrator, supervisor, prompt generator
 │   │   ├── db/                  # Async session factory + startup migrations
@@ -75,10 +75,13 @@ Open dev UI at http://localhost:5174 — not :5173.
 
 - **Personas** are defined by structured fields (identity, perspective, constraints, role_label). The service generates a system prompt from these fields. Users review and approve the prompt before it's used in runs.
 - **Journeys** are ordered sequences of phases. Each phase has instructions that the persona follows independently.
-- **Runs** evaluate a target repo. A run specifies a `repo_url`, selected personas, and a journey. The orchestrator spins up one Docker container per persona, each clones the repo and runs through all journey phases.
+- **Runs** evaluate a target repo. A run specifies a `repo_url`, selected personas (each with an optional environment), a journey, and optionally a model (omitted: the server's default). The orchestrator spins up one container per persona, using the persona's environment image or the default, and each clones the repo and runs through all journey phases.
+- **Environments** are container images built `FROM` the SimCrew agent image; see *Custom agent environments* below.
 - **Engine** has two modes:
   - **Orchestrator** (`app/main.py`): receives runs, manages agent container lifecycle via Docker SDK, collects findings, deduplicates, scores (GREEN/YELLOW/RED).
-  - **Agent** (`app/agent_server.py`): clones the repo, runs the LLM tool-use loop (Claude via Anthropic SDK), reports findings back to the orchestrator.
+  - **Agent** (`app/agent_server.py`): clones the repo, runs the LLM tool-use loop (any OpenAI-compatible model through `engine/nvidia_nim.py`, or Claude through the Anthropic SDK), reports findings back to the orchestrator.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the run lifecycle, tools, models, environments, and triage.
 
 ## Key Files
 
@@ -86,11 +89,15 @@ Open dev UI at http://localhost:5174 — not :5173.
 - `backend/app/engine/orchestrator.py` — Docker container lifecycle (start, health check, collect results, cleanup)
 - `backend/app/engine/tools.py` — tool implementations + allowlist/blocklist (all tools always available)
 - `backend/app/engine/supervisor.py` — deterministic deduplication + scoring logic
+- `backend/app/engine/triage.py`, `triage_dedup.py`, `triage_verify.py` — post-run dedup (incl. LLM merge), spot-checks, insights
+- `backend/app/engine/nvidia_nim.py` — OpenAI-compatible client (retries, rate-limit waits, optional fallback model)
 - `backend/app/engine/prompt_generator.py` — structured fields → system prompt
 - `backend/app/agent_server.py` — agent container FastAPI app (POST /run, GET /health)
 - `backend/app/seed/dx_pack.py` — built-in DX personas and journey
 - `backend/app/seed/test_pack.py` — built-in smoke-test personas and journey
 - `backend/app/api/runs.py` — run creation + background orchestrated execution
+- `backend/app/api/environments.py`, `backend/app/schemas/environment.py` — environments CRUD and the image allowlist
+- `backend/app/api/models.py`, `runner.default_model` / `runner.list_models` — default model and `GET /api/models`
 - `backend/entrypoint.sh` — SU_ROLE-based dispatch (orchestrator vs agent)
 
 ## Environment Variables
@@ -113,7 +120,7 @@ Open dev UI at http://localhost:5174 — not :5173.
 | `SU_ALLOWED_ENV_IMAGE_PREFIXES` | No | Comma-separated image prefixes environments may use (default: any image) |
 | `SU_AGENT_RUN_TIMEOUT` | No | Seconds to wait for all personas in a run before failing it (default `1800`) |
 
-Copy `.env.example` to `.env` for local shell exports. Docker Compose reads `ANTHROPIC_API_KEY` and `ANTHROPIC_VERTEX_PROJECT_ID` from your environment.
+Copy `.env.example` to `.env` and fill in a provider key; `docker compose` reads it automatically. Runs default to `NVIDIA_NIM_MODEL` (or `ANTHROPIC_MODEL`), and any run can name another model.
 
 ## Test runs (agents: always use these)
 
