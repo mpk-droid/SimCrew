@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import enum
+import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -39,6 +40,41 @@ def normalize_severity(value: str) -> Severity:
     if key in _LEGACY_SEVERITY_MAP:
         return _LEGACY_SEVERITY_MAP[key]
     return Severity(key)
+
+
+def normalize_line_range(value: object) -> list[int] | None:
+    """Coerce whatever the model sent into [start, end], or None.
+
+    The tool schema asks for two integers, but models also send 42, "42",
+    "10-20", or one-item lists; a raw int crashed the ARRAY column insert.
+    """
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return [int(value), int(value)]
+    if isinstance(value, str):
+        numbers = [int(n) for n in re.findall(r"\d+", value)][:2]
+    elif isinstance(value, (list, tuple)):
+        numbers = []
+        for item in value[:2]:
+            if isinstance(item, bool):
+                return None
+            try:
+                numbers.append(int(item))
+            except (TypeError, ValueError):
+                return None
+    else:
+        return None
+    if not numbers:
+        return None
+    return [numbers[0], numbers[-1]]
+
+
+def normalize_file_path(value: object) -> str | None:
+    if value is None or isinstance(value, (dict, list, tuple)):
+        return None
+    path = str(value).strip()
+    return path[:1024] or None
 
 
 class Finding(Base):
