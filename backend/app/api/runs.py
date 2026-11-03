@@ -21,7 +21,11 @@ from app.engine.runner import (
 )
 from app.models.environment import Environment
 from app.models.finding import Finding as FindingModel
-from app.models.finding import normalize_severity
+from app.models.finding import (
+    normalize_file_path,
+    normalize_line_range,
+    normalize_severity,
+)
 from app.models.journey import Journey
 from app.models.persona import Persona
 from app.models.run import (
@@ -689,8 +693,8 @@ async def agent_progress(
                     title=f_data["title"],
                     description=f_data["description"],
                     evidence=f_data["evidence"],
-                    file_path=f_data.get("file_path"),
-                    line_range=f_data.get("line_range"),
+                    file_path=normalize_file_path(f_data.get("file_path")),
+                    line_range=normalize_line_range(f_data.get("line_range")),
                     suggestion=f_data.get("suggestion"),
                     phase=f_data.get("phase", ""),
                 )
@@ -768,8 +772,8 @@ async def agent_done(
             title=f_data["title"],
             description=f_data["description"],
             evidence=f_data["evidence"],
-            file_path=f_data.get("file_path"),
-            line_range=f_data.get("line_range"),
+            file_path=normalize_file_path(f_data.get("file_path")),
+            line_range=normalize_line_range(f_data.get("line_range")),
             suggestion=f_data.get("suggestion"),
             phase=f_data.get("phase", ""),
         )
