@@ -51,6 +51,8 @@ On plain Kubernetes, add `--set route.enabled=false` and expose the `simcrew` se
 
 ### Run Your First Evaluation
 
+**Choosing a model.** Each run can name any model your provider serves: type it in the **Model** field on New Run (it suggests what the provider lists) or pass `"model"` to `POST /api/runs`. Leave it blank to use the server's default (`NVIDIA_NIM_MODEL`, or `ANTHROPIC_MODEL` for Anthropic/Vertex). `GET /api/models` shows the default and the available models.
+
 **Via the UI:**
 1. Open http://localhost:8000. Built-in personas and journeys (DX evaluation and smoke test) load on startup.
 2. Check your setup with a quick run: **New Run** → repo `https://github.com/mpk-droid/synthetic-users-smoke-test.git`, journey **Smoke Test Journey**, personas **Alex (Test)**, **Blake (Test)**, **Casey (Test)**.
@@ -256,6 +258,9 @@ Environments run whatever image they point to. On an instance other people can r
 | `NVIDIA_API_KEY` | One LLM option | NVIDIA NIM key from [build.nvidia.com](https://build.nvidia.com/settings) |
 | `MODELS_CORP_API_KEY`, `MODELS_CORP_URL` | One LLM option | Models.Corp MaaS key and endpoint |
 | `ANTHROPIC_API_KEY` | One LLM option | Direct Anthropic API key |
+| `NVIDIA_NIM_MODEL` | No | Default model when `NVIDIA_API_KEY` is set (default `nvidia/nemotron-3-ultra-550b-a55b`) |
+| `NVIDIA_NIM_BASE_URL` | No | Any OpenAI-compatible endpoint; `NVIDIA_API_KEY` is sent as its bearer token (default NVIDIA's API) |
+| `ANTHROPIC_MODEL` | No | Default model for Anthropic or Vertex (default `claude-sonnet-5-5`) |
 | `ANTHROPIC_VERTEX_PROJECT_ID`, `CLOUD_ML_REGION` | One LLM option | Vertex AI project and region |
 | `SU_ROLE` | No | `orchestrator` (default) or `agent` |
 | `SU_AGENT_IMAGE` | No | Image for agent containers (default `simcrew:latest`) |
@@ -294,6 +299,7 @@ See [Run on your cluster](#run-on-your-cluster-openshift) for the basic install.
 | `/api/runs/{id}` | GET, DELETE | Run detail / delete run |
 | `/api/runs/{id}/findings` | GET | All findings for a run |
 | `/api/prompts/generate` | POST | Preview prompt from structured fields |
+| `/api/models` | GET | Default model and the models the provider lists |
 
 Full OpenAPI docs at http://localhost:8000/docs.
 

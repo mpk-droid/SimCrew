@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+_MODEL_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@+-]*$")
 _SCP_STYLE_URL = re.compile(r"^git@[A-Za-z0-9.-]+:[A-Za-z0-9._/~-]+$")
 _FORBIDDEN_URL_CHARS = re.compile(r"[\s;&|$`<>\\'\"(){}*?!#]")
 
@@ -51,8 +52,19 @@ class RunCreate(BaseModel):
     repo_url: str
     persona_environments: list[PersonaEnvironmentSpec]
     journey_id: uuid.UUID
-    model: str = "nvidia/nemotron-3-ultra-550b-a55b"
+    # None: the server's default model for its provider.
+    model: str | None = Field(None, max_length=255)
     config: dict = Field(default_factory=dict)
+
+    @field_validator("model")
+    @classmethod
+    def _check_model(cls, v: str | None) -> str | None:
+        if v is None or not v.strip():
+            return None
+        v = v.strip()
+        if not _MODEL_ID.match(v):
+            raise ValueError("model must be a model id like org/model-name")
+        return v
 
     @field_validator("repo_url")
     @classmethod

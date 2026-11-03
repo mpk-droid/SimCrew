@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import environments, journeys, personas, prompts, runs
+from app.api import environments, journeys, models, personas, prompts, runs
 from app.db.migrate import (
     migrate_drop_finding_verified,
     migrate_drop_global_findings,
@@ -56,6 +56,7 @@ app.include_router(prompts.router, prefix="/api/prompts", tags=["prompts"])
 app.include_router(
     environments.router, prefix="/api/environments", tags=["environments"]
 )
+app.include_router(models.router, prefix="/api/models", tags=["models"])
 
 
 @app.get("/health")

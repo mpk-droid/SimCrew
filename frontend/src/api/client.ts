@@ -5,6 +5,7 @@ import type {
   EnvironmentResponse,
   EnvironmentCreate,
   EnvironmentUpdate,
+  ModelsResponse,
   JourneyResponse,
   JourneyCreate,
   JourneyUpdate,
@@ -160,6 +161,12 @@ export function generatePrompt(data: {
     method: 'POST',
     body: JSON.stringify(data),
   });
+}
+
+// --- Models ---
+
+export function getModels(): Promise<ModelsResponse> {
+  return request('/api/models');
 }
 
 // --- Environments ---

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { getPersonas, getJourneys, getEnvironments, createRun } from '../api/client';
+import { getPersonas, getJourneys, getEnvironments, getModels, createRun } from '../api/client';
 import type { PersonaEnvironmentSpec } from '../types';
 import { PublicRepoDisclaimerBanner } from '../components/PublicRepoDisclaimerBanner';
 import { personaShortName } from '../utils/personaDisplay';
@@ -24,11 +24,16 @@ export default function NewRun() {
     queryFn: getEnvironments,
   });
 
+  const { data: models } = useQuery({
+    queryKey: ['models'],
+    queryFn: getModels,
+  });
+
   const [form, setForm] = useState({
     name: '',
     repo_url: '',
     journey_id: '',
-    model: 'nvidia/nemotron-3-ultra-550b-a55b',
+    model: '',
   });
 
   const [personaEnvs, setPersonaEnvs] = useState<Record<string, string>>({});
@@ -59,7 +64,7 @@ export default function NewRun() {
         repo_url: form.repo_url,
         persona_environments: buildPersonaEnvironments(),
         journey_id: form.journey_id,
-        model: form.model,
+        model: form.model.trim() || undefined,
       }),
     onSuccess: (run) => {
       navigate(`/runs/${run.id}`);
@@ -127,12 +132,24 @@ export default function NewRun() {
           <label htmlFor="model">Model</label>
           <input
             id="model"
+            name="model"
             type="text"
+            list="model-options"
             value={form.model}
-            disabled
-            readOnly
-            className="input--disabled"
+            onChange={(e) => setForm((p) => ({ ...p, model: e.target.value }))}
+            placeholder={models?.default ?? 'Server default'}
+            autoComplete="off"
           />
+          <datalist id="model-options">
+            {models?.available.map((id) => (
+              <option key={id} value={id} />
+            ))}
+          </datalist>
+          <p className="form-hint">
+            Leave blank for this server's default
+            {models?.default ? ` (${models.default})` : ''}, or enter any model your
+            provider serves.
+          </p>
         </div>
 
         <div className="form-group">
