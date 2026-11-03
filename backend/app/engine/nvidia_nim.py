@@ -210,7 +210,25 @@ class NvidiaNimMessages:
             attempt = 0
             rate_limit_waits = 0
             while attempt < MAX_RETRIES:
-                response = await self._client.post(url, headers=headers, json=body)
+                try:
+                    response = await self._client.post(url, headers=headers, json=body)
+                except httpx.TransportError as exc:
+                    # Dropped connections and timeouts: same path as a 5xx.
+                    last_error = exc
+                    if attempt < MAX_RETRIES - 1:
+                        logger.warning(
+                            "NVIDIA NIM request to %s failed (%s); retrying (%s/%s)",
+                            current_model,
+                            exc.__class__.__name__,
+                            attempt + 1,
+                            MAX_RETRIES,
+                        )
+                        await asyncio.sleep(2**attempt)
+                        attempt += 1
+                        continue
+                    if model_index < len(models) - 1:
+                        break
+                    raise
                 if response.status_code == 429:
                     if rate_limit_waits >= MAX_RATE_LIMIT_WAITS:
                         last_error = RuntimeError(

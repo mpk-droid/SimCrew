@@ -72,3 +72,38 @@ def test_404_fails_fast() -> None:
     with pytest.raises(httpx.HTTPStatusError):
         _call(_client([404], seen))
     assert seen == ["primary"]
+
+
+def _flaky_client(failures: int, seen: list[str], fallback="fallback"):
+    calls = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(json.loads(request.content)["model"])
+        calls["n"] += 1
+        if calls["n"] <= failures:
+            raise httpx.RemoteProtocolError("Server disconnected", request=request)
+        return httpx.Response(200, json=OK)
+
+    nim = NvidiaNimMessages(
+        base_url="https://nim.test/v1",
+        api_key="k",
+        default_model="primary",
+        fallback_model=fallback,
+    )
+    nim._client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    return nim
+
+
+def test_dropped_connection_is_retried() -> None:
+    seen: list[str] = []
+    result = _call(_flaky_client(2, seen))
+    assert result.content[0].text == "hi"
+    assert seen == ["primary"] * 3
+
+
+def test_dropped_connections_fall_back_then_raise() -> None:
+    seen: list[str] = []
+    result = _call(_flaky_client(nvidia_nim.MAX_RETRIES, seen))
+    assert seen[-1] == "fallback" and result.content[0].text == "hi"
+    with pytest.raises(httpx.RemoteProtocolError):
+        _call(_flaky_client(nvidia_nim.MAX_RETRIES * 3, [], fallback=None))
