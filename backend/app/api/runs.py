@@ -377,7 +377,6 @@ async def _run_engine(run_id: uuid.UUID) -> None:
                     "name": f"{p.name}{env_suffix}",
                     "system_prompt": p.system_prompt,
                     "environment_image": env.image if env else None,
-                    "environment_description": env.description if env else None,
                 }
             )
 

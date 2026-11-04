@@ -229,7 +229,7 @@ USER 1001
 1. Open **Environments** → **New Environment**
 2. **Name**, e.g. `Fedora + Go`
 3. **Container image**: your pushed image, e.g. `quay.io/<you>/simcrew-fedora:latest`
-4. **Description** (optional): added to the persona's prompt as "Your machine: …", e.g. `Fedora 40 with Go installed`
+4. **Description** (optional): a note for whoever reviews the results, e.g. `Fresh laptop, no oc installed`. Agents never see it: they find out what's on their machine by using it, like a real developer
 
 Or via the API: `POST /api/environments` with `{"name": ..., "image": ..., "description": ...}`.
 

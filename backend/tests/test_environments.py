@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 from pydantic import ValidationError
 
+from app.engine import runner
 from app.engine.orchestrator import _unhealthy_message
-from app.engine.prompt_generator import generate_system_prompt, with_environment
 from app.schemas.environment import (
     EnvironmentCreate,
     EnvironmentUpdate,
@@ -63,29 +65,6 @@ def test_update_without_image_skips_validation() -> None:
     assert EnvironmentUpdate(description="new").image is None
 
 
-def _prompt() -> str:
-    return generate_system_prompt("Sam", "a junior dev", "clarity", "new to AI")
-
-
-def test_environment_is_added_to_the_environment_section() -> None:
-    prompt = with_environment(_prompt(), "Fedora 40 with Go installed.")
-    assert (
-        "## Your Environment\nYour machine: Fedora 40 with Go installed. You have"
-        in (prompt)
-    )
-    assert prompt.count("Your machine:") == 1
-
-
-def test_environment_section_is_appended_when_missing() -> None:
-    prompt = with_environment("You are Sam.", "Ubuntu 24.04")
-    assert prompt.endswith("## Your Environment\nYour machine: Ubuntu 24.04.")
-
-
-@pytest.mark.parametrize("description", [None, "", "   "])
-def test_no_environment_leaves_prompt_unchanged(description: str | None) -> None:
-    assert with_environment(_prompt(), description) == _prompt()
-
-
 def test_unhealthy_message_explains_environment_images() -> None:
     plain = _unhealthy_message({"name": "Sam"}, 120)
     assert "Sam" in plain and "FROM" not in plain
@@ -93,3 +72,25 @@ def test_unhealthy_message_explains_environment_images() -> None:
         {"name": "Sam (Go)", "environment_image": "quay.io/me/go:1"}, 120
     )
     assert "quay.io/me/go:1" in custom and "FROM the SimCrew agent image" in custom
+
+
+def test_agent_prompt_never_includes_the_environment_description(monkeypatch) -> None:
+    prompts: list[str] = []
+
+    async def fake_phase(**kwargs) -> str:
+        prompts.append(kwargs["system_prompt"])
+        return "done"
+
+    monkeypatch.setattr(runner, "_build_client", lambda config: object())
+    monkeypatch.setattr(runner, "run_persona_phase", fake_phase)
+    persona = {
+        "id": "p1",
+        "name": "Sam",
+        "system_prompt": "You are Sam.",
+        "environment_description": "Fresh laptop, no oc installed",
+    }
+    phases = [{"name": "setup", "instructions": "Set it up.", "order": 1}]
+
+    asyncio.run(runner.execute_agent_run(persona, phases, "m", {}, "/tmp"))
+
+    assert prompts == ["You are Sam."]

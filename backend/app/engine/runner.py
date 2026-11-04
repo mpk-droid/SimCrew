@@ -10,7 +10,6 @@ from datetime import datetime, timezone
 import anthropic
 import httpx
 
-from app.engine.prompt_generator import with_environment
 from app.engine.supervisor import score_run
 from app.engine.tools import ToolContext, execute_tool, get_all_tools
 from app.engine.usage import MeteredClient
@@ -280,9 +279,7 @@ async def execute_agent_run(
     build_timeout = config.get("build_timeout", 300)
 
     persona_name = persona["name"]
-    system_prompt = with_environment(
-        persona["system_prompt"], persona.get("environment_description")
-    )
+    system_prompt = persona["system_prompt"]
     persona_id = persona["id"]
 
     tool_ctx = ToolContext(
