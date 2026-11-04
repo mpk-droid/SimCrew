@@ -123,7 +123,7 @@ export default function Environments() {
               placeholder="e.g., Fedora 40 with Go 1.23 installed"
             />
             <p className="form-hint">
-              Optional. Personas see it as &ldquo;Your machine: &hellip;&rdquo; in their prompt.
+              Optional. A note for reviewers. Personas never see it; they discover their machine by using it.
             </p>
           </div>
           <div className="form-actions">

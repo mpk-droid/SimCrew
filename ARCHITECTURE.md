@@ -67,7 +67,7 @@ The orchestrator fails a run whose agents haven't all reported done within `SU_A
 1. The user fills in the structured fields; `POST /api/prompts/generate` previews the system prompt.
 2. `prompt_generator.py` wraps the fields in a template with mandatory sections: report every issue with `report_finding`, evidence must be verbatim tool output, and use only what the repository tells you.
 3. The user approves the prompt; runs use the approved prompt.
-4. At run time, `with_environment()` adds the persona's environment to the prompt's *Your Environment* section as "Your machine: …".
+4. A persona's environment changes only the image its agent runs in. The environment's description is never added to the prompt, so the agent finds out what's installed by running into it.
 
 ## Agent tools (`tools.py`)
 

@@ -138,7 +138,7 @@ Seeded from `backend/app/seed/test_pack.py` on orchestrator startup.
 
 ## Custom agent environments
 
-Base image: `ghcr.io/mpk-droid/simcrew:latest`. Custom environments must `FROM` it and keep its entrypoint (see `examples/environment/Dockerfile`). Users register variants in **Environments** (`/api/environments`), then assign one per persona on **New Run** (`persona_environments[].environment_id`). The orchestrator starts that persona's agent with `environment.image`, and the runner adds `environment.description` to the persona's system prompt (`with_environment` in `engine/prompt_generator.py`).
+Base image: `ghcr.io/mpk-droid/simcrew:latest`. Custom environments must `FROM` it and keep its entrypoint (see `examples/environment/Dockerfile`). Users register variants in **Environments** (`/api/environments`), then assign one per persona on **New Run** (`persona_environments[].environment_id`). The orchestrator starts that persona's agent with `environment.image`, `environment.description` is a note for the humans reviewing results and is never sent to the agent, so personas discover their machine the way a real developer would.
 
 `SU_ALLOWED_ENV_IMAGE_PREFIXES` restricts which images environments may use; it is checked on create/update and again at run creation. Keep it set on shared instances.
 
